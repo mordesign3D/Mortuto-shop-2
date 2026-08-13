@@ -1,0 +1,6 @@
+{
+  "name": "mortuto-shop",
+  "description": "Boutique en ligne officielle mortuto-shop - Vente en ligne de vêtements, accessoires, chaussures, électronique et décoration.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
