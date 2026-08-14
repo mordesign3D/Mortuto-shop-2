@@ -240,15 +240,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
           <div className="flex items-center space-x-2">
             <button
+              onClick={onClose}
+              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
+              title="Retourner au catalogue de la boutique"
+            >
+              <ShoppingBag className="w-3.5 h-3.5 text-orange-400" />
+              <span className="hidden sm:inline">Boutique</span>
+            </button>
+            <button
               onClick={onLogout}
-              className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+              className="px-3 py-1.5 rounded-xl bg-rose-950/70 hover:bg-rose-900 text-rose-300 border border-rose-800/40 text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
             >
               <LogOut className="w-3.5 h-3.5 text-rose-400" />
               <span className="hidden sm:inline">Déconnexion</span>
             </button>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300"
+              className="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 cursor-pointer"
+              title="Fermer"
             >
               <X className="w-5 h-5" />
             </button>

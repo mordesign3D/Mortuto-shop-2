@@ -80,19 +80,18 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Action Buttons */}
           <div className="flex items-center space-x-2 sm:space-x-3">
-            {/* Espace Administrateur Button */}
-            <button
-              id="admin-space-btn"
-              onClick={onOpenAdminLogin}
-              className={`flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border ${
-                currentAdmin
-                  ? 'bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100'
-                  : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-transparent'
-              }`}
-            >
-              <ShieldCheck className={`w-4 h-4 ${currentAdmin ? 'text-orange-600' : 'text-slate-500'}`} />
-              <span className="hidden lg:inline">{currentAdmin ? `Admin: ${currentAdmin.username}` : 'Espace Admin'}</span>
-            </button>
+            {/* Espace Administrateur Button (Visible ONLY when an admin is actively authenticated) */}
+            {currentAdmin && (
+              <button
+                id="admin-space-btn"
+                onClick={onOpenAdminLogin}
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                title="Accéder au panneau d'administration"
+              >
+                <ShieldCheck className="w-4 h-4 text-orange-600" />
+                <span className="hidden lg:inline">Admin: {currentAdmin.username}</span>
+              </button>
+            )}
 
             {/* Wishlist Indicator */}
             <div className="relative flex items-center px-2 py-1 text-slate-600 text-xs font-semibold">

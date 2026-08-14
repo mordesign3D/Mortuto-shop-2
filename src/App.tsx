@@ -7,13 +7,29 @@ import { ProductModal } from './components/ProductModal';
 import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { OrdersModal } from './components/OrdersModal';
-import { AdminLoginModal } from './components/AdminLoginModal';
-import { AdminDashboard } from './components/AdminDashboard';
+import { AdminPortal } from './components/AdminPortal';
 import { MortutoLogo } from './components/MortutoLogo';
-import { Sparkles, Award, Truck, Shield, RotateCcw, Tag, ShieldCheck, MessageCircle } from 'lucide-react';
+import { Sparkles, Award, Truck, Shield, RotateCcw, Tag, MessageCircle, Lock } from 'lucide-react';
 import { WHATSAPP_BUSINESS_URL } from './utils/whatsapp';
+import { getAppRoute, navigateTo, AppRoute } from './utils/navigation';
 
 export default function App() {
+  // Current Route State ('store' | 'admin')
+  const [currentRoute, setCurrentRoute] = useState<AppRoute>(() => getAppRoute());
+
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentRoute(getAppRoute());
+    };
+
+    window.addEventListener('popstate', handleLocationChange);
+    window.addEventListener('hashchange', handleLocationChange);
+    return () => {
+      window.removeEventListener('popstate', handleLocationChange);
+      window.removeEventListener('hashchange', handleLocationChange);
+    };
+  }, []);
+
   // Products State
   const [products, setProducts] = useState<Product[]>(() => {
     const saved = localStorage.getItem('mortuto_products');
@@ -57,8 +73,6 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
-  const [isAdminLoginOpen, setIsAdminLoginOpen] = useState(false);
-  const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
 
   // Sync to localStorage
   useEffect(() => {
@@ -174,20 +188,35 @@ export default function App() {
 
   const handleAdminSuccessLogin = (admin: AdminUser) => {
     setCurrentAdmin(admin);
-    setIsAdminLoginOpen(false);
-    setIsAdminDashboardOpen(true);
   };
 
-  const handleAdminClick = () => {
-    if (currentAdmin) {
-      setIsAdminDashboardOpen(true);
-    } else {
-      setIsAdminLoginOpen(true);
-    }
+  const handleAdminLogout = () => {
+    setCurrentAdmin(null);
+    navigateTo('store');
   };
 
   const cartTotalCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
+  // If on Admin route (/admin or #/admin)
+  if (currentRoute === 'admin') {
+    return (
+      <AdminPortal
+        currentAdmin={currentAdmin}
+        onLogin={handleAdminSuccessLogin}
+        onLogout={handleAdminLogout}
+        admins={admins}
+        products={products}
+        onAddProduct={handleAddProduct}
+        onUpdateProduct={handleUpdateProduct}
+        onDeleteProduct={handleDeleteProduct}
+        onAddAdmin={handleAddAdmin}
+        orders={orders}
+        onUpdateOrderStatus={handleUpdateOrderStatus}
+      />
+    );
+  }
+
+  // Public Storefront (Boutique)
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col antialiased">
       {/* Header */}
@@ -202,7 +231,7 @@ export default function App() {
         cartCount={cartTotalCount}
         onOpenCart={() => setIsCartOpen(true)}
         onOpenOrders={() => setIsOrdersOpen(true)}
-        onOpenAdminLogin={handleAdminClick}
+        onOpenAdminLogin={() => navigateTo('admin')}
         currentAdmin={currentAdmin}
       />
 
@@ -261,14 +290,6 @@ export default function App() {
               {filteredProducts.length} article{filteredProducts.length > 1 ? 's' : ''} disponible{filteredProducts.length > 1 ? 's' : ''}
             </p>
           </div>
-
-          <button
-            onClick={handleAdminClick}
-            className="text-xs text-orange-600 font-bold hover:underline flex items-center space-x-1"
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>{currentAdmin ? 'Ouvrir Espace Admin' : 'Connexion Admin (mortuto4)'}</span>
-          </button>
         </div>
 
         {filteredProducts.length === 0 ? (
@@ -280,7 +301,7 @@ export default function App() {
                 setSelectedCategory('Tous');
                 setSearchQuery('');
               }}
-              className="mt-2 px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-bold hover:bg-orange-700 transition-colors"
+              className="mt-2 px-4 py-2 bg-orange-600 text-white rounded-xl text-xs font-bold hover:bg-orange-700 transition-colors cursor-pointer"
             >
               Voir tous les produits mortuto-shop
             </button>
@@ -331,9 +352,20 @@ export default function App() {
 
         <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
           <MortutoLogo size="sm" />
-          <p className="text-[11px] text-slate-400">
-            © 2026 mortuto-shop - Vente en ligne. Tous droits réservés.
-          </p>
+          <div className="flex items-center space-x-4">
+            <p className="text-[11px] text-slate-400">
+              © 2026 mortuto-shop - Boutique officielle de vente en ligne.
+            </p>
+            {/* Discreet administration link for the store owner */}
+            <button
+              onClick={() => navigateTo('admin')}
+              className="text-[11px] text-slate-400 hover:text-slate-600 transition-colors flex items-center space-x-1 cursor-pointer"
+              title="Accès Administrateur (/admin)"
+            >
+              <Lock className="w-3 h-3 opacity-60" />
+              <span>Administration</span>
+            </button>
+          </div>
         </div>
       </footer>
 
@@ -374,39 +406,12 @@ export default function App() {
         orders={orders}
       />
 
-      <AdminLoginModal
-        isOpen={isAdminLoginOpen}
-        onClose={() => setIsAdminLoginOpen(false)}
-        admins={admins}
-        onSuccessLogin={handleAdminSuccessLogin}
-      />
-
-      {currentAdmin && (
-        <AdminDashboard
-          isOpen={isAdminDashboardOpen}
-          onClose={() => setIsAdminDashboardOpen(false)}
-          currentAdmin={currentAdmin}
-          onLogout={() => {
-            setCurrentAdmin(null);
-            setIsAdminDashboardOpen(false);
-          }}
-          products={products}
-          onAddProduct={handleAddProduct}
-          onUpdateProduct={handleUpdateProduct}
-          onDeleteProduct={handleDeleteProduct}
-          admins={admins}
-          onAddAdmin={handleAddAdmin}
-          orders={orders}
-          onUpdateOrderStatus={handleUpdateOrderStatus}
-        />
-      )}
-
       {/* Floating WhatsApp Business Button */}
       <a
         href={WHATSAPP_BUSINESS_URL}
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl flex items-center space-x-2 transition-all hover:scale-105 border-2 border-white group"
+        className="fixed bottom-6 right-6 z-40 bg-emerald-600 hover:bg-emerald-700 text-white p-3.5 rounded-full shadow-2xl flex items-center space-x-2 transition-all hover:scale-105 border-2 border-white group cursor-pointer"
         title="Contactez mortuto-shop sur WhatsApp"
       >
         <MessageCircle className="w-6 h-6 fill-white text-emerald-600" />
@@ -415,3 +420,4 @@ export default function App() {
     </div>
   );
 }
+

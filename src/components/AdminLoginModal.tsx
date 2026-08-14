@@ -18,8 +18,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 }) => {
   if (!isOpen) return null;
 
-  const [username, setUsername] = useState('mortuto4');
-  const [password, setPassword] = useState('Mortuto2');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -79,7 +79,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
                 required
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder="Ex: mortuto4"
+                placeholder="Identifiant administrateur"
                 className="w-full pl-10 pr-4 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-orange-500"
               />
             </div>
@@ -101,17 +101,10 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             </div>
           </div>
 
-          <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-[11px] text-orange-950 leading-relaxed">
-            <span className="font-bold block">Identifiants de démonstration :</span>
-            <span>Nom d'utilisateur : <code className="bg-orange-100 px-1 py-0.5 rounded font-mono font-bold">mortuto4</code></span>
-            <br />
-            <span>Mot de passe : <code className="bg-orange-100 px-1 py-0.5 rounded font-mono font-bold">Mortuto2</code></span>
-          </div>
-
           <button
             id="submit-admin-login"
             type="submit"
-            className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition-colors shadow-md flex items-center justify-center space-x-2"
+            className="w-full py-2.5 px-4 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition-colors shadow-md flex items-center justify-center space-x-2 cursor-pointer"
           >
             <Lock className="w-4 h-4" />
             <span>Se connecter à l'Admin</span>
