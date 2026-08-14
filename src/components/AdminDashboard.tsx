@@ -10,18 +10,18 @@ import {
   UserPlus,
   Users,
   Tag,
-  DollarSign,
+  Coins,
   Percent,
   Image as ImageIcon,
   Check,
   LogOut,
-  Sparkles,
   ShoppingBag,
   Shield,
   Layers,
-  Clock,
-  ArrowDownRight
+  Images,
+  Upload
 } from 'lucide-react';
+import { formatCFA } from '../utils/formatters';
 
 interface AdminDashboardProps {
   isOpen: boolean;
@@ -44,7 +44,9 @@ const PRESET_PRODUCT_IMAGES = [
   'https://images.unsplash.com/photo-1560769629-975ec94e6a86?auto=format&fit=crop&q=80&w=800',
   'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&q=80&w=800',
   'https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&q=80&w=800',
-  'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800'
+  'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&q=80&w=800',
+  'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=800',
+  'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&q=80&w=800'
 ];
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = ({
@@ -65,16 +67,23 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const [activeTab, setActiveTab] = useState<'products' | 'admins' | 'orders'>('products');
 
-  // Product Form State
+  // Product Form State (Stored as Strings for zero typing lags and smooth input)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productName, setProductName] = useState('');
   const [productCategory, setProductCategory] = useState('Vêtements');
   const [customCategory, setCustomCategory] = useState('');
-  const [productPrice, setProductPrice] = useState<number | ''>(99.90);
+  const [productPrice, setProductPrice] = useState('25000');
   const [isPromo, setIsPromo] = useState(false);
-  const [discountPercent, setDiscountPercent] = useState<number | ''>(20);
-  const [originalPrice, setOriginalPrice] = useState<number | ''>(124.88);
-  const [productImage, setProductImage] = useState(PRESET_PRODUCT_IMAGES[0]);
+  const [discountPercent, setDiscountPercent] = useState('20');
+  const [originalPrice, setOriginalPrice] = useState('30000');
+  
+  // 3 to 5 images support
+  const [productImages, setProductImages] = useState<string[]>([
+    PRESET_PRODUCT_IMAGES[0],
+    PRESET_PRODUCT_IMAGES[6],
+    PRESET_PRODUCT_IMAGES[2]
+  ]);
+
   const [productDescription, setProductDescription] = useState('Produit de haute qualité sélectionné par mortuto-shop.');
   const [productSizes, setProductSizes] = useState('S, M, L, XL');
   const [productColors, setProductColors] = useState('Noir, Blanc, Beige');
@@ -86,33 +95,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const [newAdminRole, setNewAdminRole] = useState<'Super Admin' | 'Gestionnaire'>('Gestionnaire');
   const [adminNotice, setAdminNotice] = useState('');
 
-  // Calculate prices based on discount %
-  const handleDiscountPercentChange = (val: number | '') => {
-    setDiscountPercent(val);
-    if (val !== '' && productPrice !== '') {
-      const orig = Number((Number(productPrice) / (1 - Number(val) / 100)).toFixed(2));
-      setOriginalPrice(orig);
-    }
-  };
-
-  const handlePriceChange = (val: number | '') => {
-    setProductPrice(val);
-    if (val !== '' && isPromo && discountPercent !== '') {
-      const orig = Number((Number(val) / (1 - Number(discountPercent) / 100)).toFixed(2));
-      setOriginalPrice(orig);
-    }
-  };
-
   const resetProductForm = () => {
     setEditingProduct(null);
     setProductName('');
     setProductCategory('Vêtements');
     setCustomCategory('');
-    setProductPrice(99.90);
+    setProductPrice('25000');
     setIsPromo(false);
-    setDiscountPercent(20);
-    setOriginalPrice(124.88);
-    setProductImage(PRESET_PRODUCT_IMAGES[0]);
+    setDiscountPercent('20');
+    setOriginalPrice('30000');
+    setProductImages([
+      PRESET_PRODUCT_IMAGES[0],
+      PRESET_PRODUCT_IMAGES[6],
+      PRESET_PRODUCT_IMAGES[2]
+    ]);
     setProductDescription('Produit de haute qualité sélectionné par mortuto-shop.');
     setProductSizes('S, M, L, XL');
     setProductColors('Noir, Blanc, Beige');
@@ -122,40 +118,91 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     setEditingProduct(p);
     setProductName(p.name);
     setProductCategory(p.category);
-    setProductPrice(p.price);
+    setCustomCategory('');
+    setProductPrice(p.price !== undefined ? p.price.toString() : '25000');
     setIsPromo(!!p.isPromo);
-    setDiscountPercent(p.discountPercent || 20);
-    setOriginalPrice(p.originalPrice || Number((p.price * 1.25).toFixed(2)));
-    setProductImage(p.image);
-    setProductDescription(p.description);
-    setProductSizes(p.sizes ? p.sizes.join(', ') : 'S, M, L');
-    setProductColors(p.colors ? p.colors.map(c => c.name).join(', ') : 'Noir, Blanc');
+    setDiscountPercent(p.discountPercent !== undefined ? p.discountPercent.toString() : '20');
+    setOriginalPrice(
+      p.originalPrice !== undefined
+        ? p.originalPrice.toString()
+        : p.price
+        ? Math.round(p.price * 1.25).toString()
+        : '30000'
+    );
+    
+    // Set images list (from images array or single image)
+    const existingImages = p.images && p.images.length > 0 ? [...p.images] : [p.image];
+    setProductImages(existingImages);
+    
+    setProductDescription(p.description || '');
+    setProductSizes(p.sizes && p.sizes.length > 0 ? p.sizes.join(', ') : 'S, M, L');
+    setProductColors(p.colors && p.colors.length > 0 ? p.colors.map(c => c.name).join(', ') : 'Noir, Blanc');
     setActiveTab('products');
+  };
+
+  // Image manipulation handlers
+  const handleUpdateImageSlot = (index: number, url: string) => {
+    setProductImages(prev => {
+      const copy = [...prev];
+      copy[index] = url;
+      return copy;
+    });
+  };
+
+  const handleAddImageSlot = () => {
+    if (productImages.length >= 5) return;
+    const nextPreset = PRESET_PRODUCT_IMAGES[productImages.length % PRESET_PRODUCT_IMAGES.length];
+    setProductImages(prev => [...prev, nextPreset]);
+  };
+
+  const handleRemoveImageSlot = (index: number) => {
+    if (productImages.length <= 1) return;
+    setProductImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFileUploadForSlot = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          handleUpdateImageSlot(index, reader.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const handleSaveProduct = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!productName.trim() || productPrice === '') return;
+    if (!productName.trim()) return;
 
+    const parsedPrice = parseFloat(productPrice.replace(/\s/g, '').replace(',', '.')) || 0;
     const finalCategory = productCategory === 'Autre' && customCategory.trim() ? customCategory.trim() : productCategory;
-    const finalPrice = Number(productPrice);
-    const finalDiscount = isPromo && discountPercent !== '' ? Number(discountPercent) : undefined;
-    const finalOriginalPrice = isPromo ? (originalPrice !== '' ? Number(originalPrice) : Number((finalPrice * 1.25).toFixed(2))) : undefined;
+    const parsedDiscount = isPromo ? (parseFloat(discountPercent.replace(',', '.')) || undefined) : undefined;
+    const parsedOriginalPrice = isPromo
+      ? (parseFloat(originalPrice.replace(/\s/g, '').replace(',', '.')) || (parsedPrice > 0 ? Math.round(parsedPrice * 1.25) : undefined))
+      : undefined;
 
     const sizesArr = productSizes.split(',').map(s => s.trim()).filter(Boolean);
     const colorsArr = productColors.split(',').map(c => ({ name: c.trim(), hex: '#1F2937' })).filter(c => c.name);
+
+    const validImages = productImages.filter(img => img.trim().length > 0);
+    const finalImages = validImages.length > 0 ? validImages : [PRESET_PRODUCT_IMAGES[0]];
+    const primaryImage = finalImages[0];
 
     if (editingProduct) {
       const updated: Product = {
         ...editingProduct,
         name: productName.trim(),
         category: finalCategory,
-        price: finalPrice,
+        price: parsedPrice,
         isPromo,
-        discountPercent: finalDiscount,
-        originalPrice: finalOriginalPrice,
-        image: productImage,
-        description: productDescription,
+        discountPercent: parsedDiscount,
+        originalPrice: parsedOriginalPrice,
+        image: primaryImage,
+        images: finalImages,
+        description: productDescription.trim(),
         sizes: sizesArr.length > 0 ? sizesArr : undefined,
         colors: colorsArr.length > 0 ? colorsArr : undefined
       };
@@ -166,14 +213,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         id: `p-${Date.now()}`,
         name: productName.trim(),
         category: finalCategory,
-        price: finalPrice,
+        price: parsedPrice,
         isPromo,
-        discountPercent: finalDiscount,
-        originalPrice: finalOriginalPrice,
+        discountPercent: parsedDiscount,
+        originalPrice: parsedOriginalPrice,
         rating: 5.0,
         reviewsCount: 1,
-        image: productImage,
-        description: productDescription,
+        image: primaryImage,
+        images: finalImages,
+        description: productDescription.trim(),
         inStock: true,
         isNew: true,
         tags: ['Nouveau', 'mortuto-shop'],
@@ -181,10 +229,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         colors: colorsArr.length > 0 ? colorsArr : undefined
       };
       onAddProduct(newProd);
-      setSuccessNotice('Nouveau produit ajouté à la boutique !');
+      setSuccessNotice('Nouveau produit avec photos ajouté à la boutique !');
     }
 
-    setTimeout(() => setSuccessNotice(''), 3000);
+    setTimeout(() => setSuccessNotice(''), 3500);
     resetProductForm();
   };
 
@@ -201,23 +249,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     };
 
     onAddAdmin(newAdmin);
-    setAdminNotice(`Compte administrateur "${newAdmin.username}" créé !`);
+    setAdminNotice(`Compte administrateur "${newAdmin.username}" créé avec succès !`);
     setNewAdminUsername('');
     setNewAdminPassword('');
-    setTimeout(() => setAdminNotice(''), 3000);
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (reader.result) {
-          setProductImage(reader.result as string);
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+    setTimeout(() => setAdminNotice(''), 3500);
   };
 
   return (
@@ -267,8 +302,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         {/* Navigation Tabs */}
         <div className="bg-slate-100 p-2 flex items-center space-x-2 border-b border-slate-200 shrink-0 overflow-x-auto">
           <button
+            type="button"
             onClick={() => setActiveTab('products')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'products'
                 ? 'bg-orange-600 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-200'
@@ -279,8 +315,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('admins')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'admins'
                 ? 'bg-orange-600 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-200'
@@ -291,8 +328,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
           </button>
 
           <button
+            type="button"
             onClick={() => setActiveTab('orders')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all whitespace-nowrap ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center space-x-2 transition-all whitespace-nowrap cursor-pointer ${
               activeTab === 'orders'
                 ? 'bg-orange-600 text-white shadow-xs'
                 : 'text-slate-600 hover:bg-slate-200'
@@ -317,8 +355,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   </h3>
                   {editingProduct && (
                     <button
+                      type="button"
                       onClick={resetProductForm}
-                      className="text-xs text-slate-500 hover:text-slate-800 underline font-medium"
+                      className="text-xs text-slate-500 hover:text-slate-800 underline font-medium cursor-pointer"
                     >
                       Annuler l'édition
                     </button>
@@ -326,7 +365,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 {successNotice && (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-2">
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-2 animate-fade-in">
                     <Check className="w-4 h-4 text-emerald-600" />
                     <span>{successNotice}</span>
                   </div>
@@ -338,28 +377,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="md:col-span-6">
                       <label className="text-xs font-bold text-slate-700 block mb-1">Nom du produit *</label>
                       <input
+                        id="product-name-input"
                         type="text"
                         required
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
                         placeholder="Ex: Veste Cuir Mortuto Premium"
-                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500"
+                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                       />
                     </div>
 
-                    {/* Prix */}
+                    {/* Prix en FCFA */}
                     <div className="md:col-span-3">
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Prix (€) *</label>
+                      <label className="text-xs font-bold text-slate-700 block mb-1">Prix (en FCFA) *</label>
                       <div className="relative">
-                        <DollarSign className="w-4 h-4 absolute left-3 top-2.5 text-slate-400" />
+                        <Coins className="w-4 h-4 absolute left-3 top-2.5 text-orange-500" />
                         <input
-                          type="number"
-                          step="0.01"
+                          id="product-price-input"
+                          type="text"
                           required
                           value={productPrice}
-                          onChange={(e) => handlePriceChange(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                          placeholder="99.90"
-                          className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 font-bold"
+                          onChange={(e) => setProductPrice(e.target.value)}
+                          placeholder="25000"
+                          className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-bold"
                         />
                       </div>
                     </div>
@@ -368,9 +408,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div className="md:col-span-3">
                       <label className="text-xs font-bold text-slate-700 block mb-1">Classement Catégorie *</label>
                       <select
+                        id="product-category-select"
                         value={productCategory}
                         onChange={(e) => setProductCategory(e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 font-semibold"
+                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-semibold"
                       >
                         <option value="Vêtements">Vêtements</option>
                         <option value="Chaussures">Chaussures</option>
@@ -385,11 +426,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <div className="md:col-span-12">
                         <label className="text-xs font-bold text-slate-700 block mb-1">Catégorie personnalisée</label>
                         <input
+                          id="product-custom-category-input"
                           type="text"
                           value={customCategory}
                           onChange={(e) => setCustomCategory(e.target.value)}
                           placeholder="Nom de la nouvelle catégorie"
-                          className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500"
+                          className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                         />
                       </div>
                     )}
@@ -403,7 +445,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         type="checkbox"
                         checked={isPromo}
                         onChange={(e) => setIsPromo(e.target.checked)}
-                        className="w-4 h-4 text-orange-600 focus:ring-orange-500 rounded border-slate-300"
+                        className="w-4 h-4 text-orange-600 focus:ring-orange-500 rounded border-slate-300 cursor-pointer"
                       />
                       <label htmlFor="promo-checkbox" className="text-xs font-bold text-orange-950 flex items-center space-x-1 cursor-pointer">
                         <Tag className="w-4 h-4 text-orange-600" />
@@ -420,75 +462,132 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                           <div className="relative">
                             <Percent className="w-4 h-4 absolute left-3 top-2.5 text-orange-500" />
                             <input
-                              type="number"
-                              min="1"
-                              max="90"
+                              id="product-discount-input"
+                              type="text"
                               value={discountPercent}
-                              onChange={(e) => handleDiscountPercentChange(e.target.value === '' ? '' : parseInt(e.target.value))}
+                              onChange={(e) => setDiscountPercent(e.target.value)}
                               placeholder="20"
-                              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-orange-300 rounded-xl font-bold text-orange-700"
+                              className="w-full pl-9 pr-3 py-2 text-xs bg-white border border-orange-300 rounded-xl font-bold text-orange-700 focus:outline-hidden"
                             />
                           </div>
                         </div>
 
                         <div>
                           <label className="text-xs font-bold text-slate-700 block mb-1">
-                            Prix d'origine / barré avant remise (€)
+                            Prix d'origine / barré avant remise (FCFA)
                           </label>
                           <input
-                            type="number"
-                            step="0.01"
+                            id="product-original-price-input"
+                            type="text"
                             value={originalPrice}
-                            onChange={(e) => setOriginalPrice(e.target.value === '' ? '' : parseFloat(e.target.value))}
-                            placeholder="124.88"
-                            className="w-full px-3 py-2 text-xs bg-white border border-orange-300 rounded-xl font-semibold text-slate-500"
+                            onChange={(e) => setOriginalPrice(e.target.value)}
+                            placeholder="30000"
+                            className="w-full px-3 py-2 text-xs bg-white border border-orange-300 rounded-xl font-semibold text-slate-500 focus:outline-hidden"
                           />
                         </div>
                       </div>
                     )}
                   </div>
 
-                  {/* Photo du produit */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold text-slate-700 block">Photo du produit *</label>
-                    <div className="flex flex-col sm:flex-row items-center gap-4">
-                      {/* Image Preview Box */}
-                      <div className="w-20 h-20 rounded-2xl bg-white border border-slate-300 overflow-hidden shrink-0 shadow-xs">
-                        <img src={productImage} alt="Aperçu" className="w-full h-full object-cover" />
+                  {/* MULTI-PHOTOS DU PRODUIT (3 À 5 PHOTOS) */}
+                  <div className="p-4 bg-white border border-slate-200 rounded-2xl space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <Images className="w-4 h-4 text-orange-600" />
+                        <label className="text-xs font-bold text-slate-900">
+                          Photos du produit ({productImages.length}/5) - Recommandé 3 à 5 photos
+                        </label>
                       </div>
-
-                      <div className="flex-1 w-full space-y-2">
-                        <input
-                          type="text"
-                          required
-                          value={productImage}
-                          onChange={(e) => setProductImage(e.target.value)}
-                          placeholder="Collez l'URL de l'image (https://...)"
-                          className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500"
-                        />
-
-                        <div className="flex items-center space-x-2">
-                          <label className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 rounded-xl text-[11px] font-bold text-slate-700 cursor-pointer flex items-center space-x-1">
-                            <ImageIcon className="w-3.5 h-3.5" />
-                            <span>Charger un fichier image</span>
-                            <input type="file" accept="image/*" className="hidden" onChange={handleFileUpload} />
-                          </label>
-                        </div>
-                      </div>
+                      <span className="text-[11px] text-slate-500">
+                        La 1ère photo sera l'image principale de présentation
+                      </span>
                     </div>
 
-                    {/* Quick Preset Selector */}
-                    <div className="pt-1">
-                      <span className="text-[11px] text-slate-500 font-medium block mb-1">Exemples d'images rapides :</span>
-                      <div className="flex items-center space-x-2 overflow-x-auto pb-1">
+                    {/* Image slots */}
+                    <div className="space-y-3">
+                      {productImages.map((imgUrl, index) => (
+                        <div
+                          key={index}
+                          className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200"
+                        >
+                          <div className="flex items-center space-x-2 shrink-0">
+                            <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center">
+                              {index + 1}
+                            </span>
+                            {/* Preview thumbnail */}
+                            <div className="w-14 h-14 rounded-xl bg-white border border-slate-300 overflow-hidden shrink-0 shadow-xs">
+                              <img src={imgUrl} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
+                            </div>
+                          </div>
+
+                          <div className="flex-1 w-full space-y-1.5">
+                            <input
+                              type="text"
+                              value={imgUrl}
+                              onChange={(e) => handleUpdateImageSlot(index, e.target.value)}
+                              placeholder={`URL Photo ${index + 1} (https://...)`}
+                              className="w-full px-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                            />
+                            <div className="flex items-center space-x-2">
+                              <label className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer flex items-center space-x-1 transition-colors">
+                                <Upload className="w-3 h-3" />
+                                <span>Charger une photo</span>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  className="hidden"
+                                  onChange={(e) => handleFileUploadForSlot(index, e)}
+                                />
+                              </label>
+                            </div>
+                          </div>
+
+                          {/* Remove button */}
+                          {productImages.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveImageSlot(index)}
+                              className="p-2 rounded-lg text-rose-500 hover:bg-rose-50 hover:text-rose-700 transition-colors cursor-pointer shrink-0"
+                              title="Supprimer cette photo"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Add Image Slot Button */}
+                    {productImages.length < 5 && (
+                      <button
+                        type="button"
+                        onClick={handleAddImageSlot}
+                        className="w-full py-2.5 border-2 border-dashed border-orange-300 hover:border-orange-500 bg-orange-50/50 hover:bg-orange-50 text-orange-700 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
+                      >
+                        <Plus className="w-4 h-4" />
+                        <span>Ajouter une autre photo ({productImages.length + 1}/5)</span>
+                      </button>
+                    )}
+
+                    {/* Quick Preset Images Selector */}
+                    <div className="pt-2 border-t border-slate-100">
+                      <span className="text-[11px] text-slate-500 font-medium block mb-1">
+                        Ou choisissez rapidement des photos modèles :
+                      </span>
+                      <div className="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar">
                         {PRESET_PRODUCT_IMAGES.map((img, idx) => (
                           <button
                             key={idx}
                             type="button"
-                            onClick={() => setProductImage(img)}
-                            className={`w-10 h-10 rounded-lg overflow-hidden border-2 shrink-0 ${
-                              productImage === img ? 'border-orange-600 scale-105' : 'border-slate-200'
-                            }`}
+                            onClick={() => {
+                              if (productImages.length < 5) {
+                                setProductImages(prev => [...prev, img]);
+                              } else {
+                                handleUpdateImageSlot(productImages.length - 1, img);
+                              }
+                            }}
+                            className="w-11 h-11 rounded-lg overflow-hidden border border-slate-200 hover:border-orange-500 shrink-0 cursor-pointer transition-transform hover:scale-105"
+                            title="Ajouter comme photo"
                           >
                             <img src={img} alt="Preset" className="w-full h-full object-cover" />
                           </button>
@@ -502,33 +601,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <div>
                       <label className="text-xs font-bold text-slate-700 block mb-1">Tailles disponibles (séparées par des virgules)</label>
                       <input
+                        id="product-sizes-input"
                         type="text"
                         value={productSizes}
                         onChange={(e) => setProductSizes(e.target.value)}
                         placeholder="S, M, L, XL"
-                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl"
+                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                       />
                     </div>
 
                     <div>
                       <label className="text-xs font-bold text-slate-700 block mb-1">Couleurs (séparées par des virgules)</label>
                       <input
+                        id="product-colors-input"
                         type="text"
                         value={productColors}
                         onChange={(e) => setProductColors(e.target.value)}
                         placeholder="Noir, Blanc, Beige"
-                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl"
+                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                       />
                     </div>
 
                     <div className="sm:col-span-2">
                       <label className="text-xs font-bold text-slate-700 block mb-1">Description du produit</label>
                       <textarea
+                        id="product-description-input"
                         rows={2}
                         value={productDescription}
                         onChange={(e) => setProductDescription(e.target.value)}
                         placeholder="Présentation détaillée..."
-                        className="w-full p-3 text-xs bg-white border border-slate-300 rounded-xl resize-none"
+                        className="w-full p-3 text-xs bg-white border border-slate-300 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                       />
                     </div>
                   </div>
@@ -537,7 +639,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <button
                     id="save-product-btn"
                     type="submit"
-                    className="w-full py-3 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition-colors shadow-md flex items-center justify-center space-x-2"
+                    className="w-full py-3 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer"
                   >
                     <Plus className="w-4 h-4" />
                     <span>{editingProduct ? 'Mettre à jour le produit' : 'Enregistrer et publier sur la boutique'}</span>
@@ -556,7 +658,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   {products.map((p) => (
                     <div key={p.id} className="py-3 flex items-center justify-between gap-4">
                       <div className="flex items-center space-x-3 min-w-0 flex-1">
-                        <img src={p.image} alt={p.name} className="w-12 h-12 rounded-xl object-cover border border-slate-200 shrink-0" />
+                        <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-slate-200 shrink-0">
+                          <img src={p.image} alt={p.name} className="w-full h-full object-cover" />
+                          {p.images && p.images.length > 1 && (
+                            <span className="absolute bottom-0 right-0 bg-black/75 text-white text-[9px] font-bold px-1 rounded-tl-md">
+                              {p.images.length}📸
+                            </span>
+                          )}
+                        </div>
                         <div className="min-w-0">
                           <div className="flex items-center space-x-2">
                             <h4 className="text-xs font-bold text-slate-900 truncate">{p.name}</h4>
@@ -572,23 +681,25 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                       <div className="flex items-center space-x-4">
                         <div className="text-right">
-                          <span className="text-xs font-black text-slate-900 block">{p.price.toFixed(2)} €</span>
+                          <span className="text-xs font-black text-slate-900 block">{formatCFA(p.price)}</span>
                           {p.originalPrice && (
-                            <span className="text-[10px] text-slate-400 line-through block">{p.originalPrice.toFixed(2)} €</span>
+                            <span className="text-[10px] text-slate-400 line-through block">{formatCFA(p.originalPrice)}</span>
                           )}
                         </div>
 
                         <div className="flex items-center space-x-1">
                           <button
+                            type="button"
                             onClick={() => handleEditClick(p)}
-                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-orange-100 text-slate-700 hover:text-orange-700 transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-orange-100 text-slate-700 hover:text-orange-700 transition-colors cursor-pointer"
                             title="Modifier"
                           >
                             <Edit className="w-4 h-4" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => onDeleteProduct(p.id)}
-                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-700 transition-colors"
+                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-rose-100 text-slate-700 hover:text-rose-700 transition-colors cursor-pointer"
                             title="Supprimer"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -612,7 +723,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </h3>
 
                 {adminNotice && (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-2">
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-2 animate-fade-in">
                     <Check className="w-4 h-4 text-emerald-600" />
                     <span>{adminNotice}</span>
                   </div>
@@ -622,33 +733,36 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                   <div className="sm:col-span-4">
                     <label className="text-xs font-bold text-slate-700 block mb-1">Nom d'utilisateur *</label>
                     <input
+                      id="new-admin-username-input"
                       type="text"
                       required
                       value={newAdminUsername}
                       onChange={(e) => setNewAdminUsername(e.target.value)}
                       placeholder="Ex: admin_mame"
-                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl"
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                     />
                   </div>
 
                   <div className="sm:col-span-4">
                     <label className="text-xs font-bold text-slate-700 block mb-1">Mot de passe *</label>
                     <input
+                      id="new-admin-password-input"
                       type="password"
                       required
                       value={newAdminPassword}
                       onChange={(e) => setNewAdminPassword(e.target.value)}
                       placeholder="••••••••"
-                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl"
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                     />
                   </div>
 
                   <div className="sm:col-span-4">
                     <label className="text-xs font-bold text-slate-700 block mb-1">Rôle</label>
                     <select
+                      id="new-admin-role-select"
                       value={newAdminRole}
                       onChange={(e) => setNewAdminRole(e.target.value as any)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-semibold"
+                      className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl font-semibold focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                     >
                       <option value="Gestionnaire">Gestionnaire Boutique</option>
                       <option value="Super Admin">Super Admin</option>
@@ -659,7 +773,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <button
                       id="create-admin-btn"
                       type="submit"
-                      className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 text-white font-bold rounded-xl text-xs transition-colors shadow-xs flex items-center justify-center space-x-2"
+                      className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center space-x-2 cursor-pointer"
                     >
                       <UserPlus className="w-4 h-4" />
                       <span>Créer l'administrateur</span>
@@ -741,7 +855,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                     <div className="pt-2 border-t border-slate-100 flex justify-between items-center text-xs">
                       <span className="text-slate-500">{o.items.length} article(s)</span>
-                      <span className="font-black text-slate-900 text-sm">{o.totalAmount.toFixed(2)} €</span>
+                      <span className="font-black text-slate-900 text-sm">{formatCFA(o.totalAmount)}</span>
                     </div>
                   </div>
                 ))

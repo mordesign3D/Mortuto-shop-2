@@ -9,6 +9,7 @@ export interface Product {
   rating: number;
   reviewsCount: number;
   image: string;
+  images?: string[];
   description: string;
   inStock: boolean;
   isNew?: boolean;

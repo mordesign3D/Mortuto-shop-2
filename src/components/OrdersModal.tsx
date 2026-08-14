@@ -1,6 +1,7 @@
 import React from 'react';
 import { Order } from '../types';
-import { X, Package, Clock, Truck, CheckCircle2 } from 'lucide-react';
+import { X, Package, Clock } from 'lucide-react';
+import { formatCFA } from '../utils/formatters';
 
 interface OrdersModalProps {
   isOpen: boolean;
@@ -23,7 +24,11 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({
             <Package className="w-5 h-5 text-orange-600" />
             <h2 className="text-base font-bold text-slate-900">Mes Commandes mortuto-shop</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-slate-200 text-slate-600 cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -68,14 +73,14 @@ export const OrdersModal: React.FC<OrdersModalProps> = ({
                           Quantité : {item.quantity} {item.selectedSize ? `• Taille ${item.selectedSize}` : ''}
                         </p>
                       </div>
-                      <span className="font-bold text-slate-800">{(item.product.price * item.quantity).toFixed(2)} €</span>
+                      <span className="font-bold text-slate-800">{formatCFA(item.product.price * item.quantity)}</span>
                     </div>
                   ))}
                 </div>
 
                 <div className="pt-2 border-t border-slate-200 flex justify-between items-center text-xs font-bold">
                   <span className="text-slate-600">Total payé</span>
-                  <span className="text-orange-600 text-sm">{order.totalAmount.toFixed(2)} €</span>
+                  <span className="text-orange-600 text-sm">{formatCFA(order.totalAmount)}</span>
                 </div>
               </div>
             ))

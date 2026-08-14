@@ -336,8 +336,8 @@ export default function App() {
           <div className="flex items-center space-x-3 justify-center sm:justify-start">
             <Truck className="w-8 h-8 text-orange-600 shrink-0" />
             <div>
-              <h4 className="text-xs font-bold text-slate-900">Livraison Offerte dès 80€</h4>
-              <p className="text-[11px] text-slate-500">Envoi rapide avec suivi Colissimo</p>
+              <h4 className="text-xs font-bold text-slate-900">Livraison Offerte dès 50 000 FCFA</h4>
+              <p className="text-[11px] text-slate-500">Envoi rapide avec suivi de colis</p>
             </div>
           </div>
 

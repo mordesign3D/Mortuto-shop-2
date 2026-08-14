@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Product } from '../types';
-import { Heart, Eye, Star, ShoppingBag, Tag } from 'lucide-react';
+import { Heart, Eye, Star, ShoppingBag, Tag, ChevronLeft, ChevronRight } from 'lucide-react';
+import { formatCFA } from '../utils/formatters';
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   onSelectProduct,
   onAddToCart
 }) => {
+  const imagesList = product.images && product.images.length > 0 ? product.images : [product.image];
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev === 0 ? imagesList.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveImageIndex((prev) => (prev === imagesList.length - 1 ? 0 : prev + 1));
+  };
+
   return (
     <div
       id={`product-card-${product.id}`}
@@ -24,11 +38,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     >
       {/* Image container */}
       <div
-        className="relative aspect-4/3 sm:aspect-square bg-slate-100 overflow-hidden cursor-pointer"
+        className="relative aspect-4/3 sm:aspect-square bg-slate-100 overflow-hidden cursor-pointer select-none"
         onClick={() => onSelectProduct(product)}
       >
         <img
-          src={product.image}
+          src={imagesList[activeImageIndex] || product.image}
           alt={product.name}
           referrerPolicy="no-referrer"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
@@ -53,24 +67,67 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Wishlist Button */}
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             onToggleWishlist(product.id);
           }}
-          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all z-10 ${
+          className={`absolute top-3 right-3 p-2 rounded-full backdrop-blur-md transition-all z-10 cursor-pointer ${
             isWishlisted
               ? 'bg-rose-50 text-rose-600 shadow-xs'
               : 'bg-white/80 text-slate-600 hover:bg-white hover:text-rose-500'
           }`}
+          title="Ajouter aux favoris"
         >
           <Heart className={`w-4 h-4 ${isWishlisted ? 'fill-rose-500 text-rose-500' : ''}`} />
         </button>
 
+        {/* Multiple Photos Navigation Arrows (if > 1 image) */}
+        {imagesList.length > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={handlePrevImage}
+              className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/40 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+              title="Photo précédente"
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+            <button
+              type="button"
+              onClick={handleNextImage}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-black/40 hover:bg-black/70 text-white opacity-0 group-hover:opacity-100 transition-opacity z-10 cursor-pointer"
+              title="Photo suivante"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
+
+            {/* Indicator Dots at bottom of image */}
+            <div className="absolute bottom-2 left-0 right-0 flex justify-center items-center gap-1 z-10">
+              {imagesList.map((_, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImageIndex(idx);
+                  }}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                    activeImageIndex === idx
+                      ? 'w-4 bg-orange-600 shadow-xs'
+                      : 'w-1.5 bg-white/70 hover:bg-white'
+                  }`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
         {/* Quick View Hover overlay */}
-        <div className="absolute inset-0 bg-slate-900/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
-          <span className="bg-white text-slate-900 text-xs font-bold px-3.5 py-1.5 rounded-full shadow-md flex items-center space-x-1.5">
+        <div className="absolute inset-0 bg-slate-900/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+          <span className="bg-white/90 backdrop-blur-xs text-slate-900 text-xs font-bold px-3 py-1.5 rounded-full shadow-md flex items-center space-x-1.5">
             <Eye className="w-3.5 h-3.5 text-orange-600" />
-            <span>Aperçu rapide</span>
+            <span>Voir détails</span>
           </span>
         </div>
       </div>
@@ -101,20 +158,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
         {/* Price & Add Button */}
         <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-          <div className="flex items-baseline space-x-2">
-            <span className="text-base font-black text-slate-900">
-              {product.price.toFixed(2)} €
+          <div className="flex flex-col">
+            <span className="text-sm sm:text-base font-black text-slate-900">
+              {formatCFA(product.price)}
             </span>
             {product.originalPrice && (
-              <span className="text-xs text-slate-400 line-through font-medium">
-                {product.originalPrice.toFixed(2)} €
+              <span className="text-[11px] text-slate-400 line-through font-medium">
+                {formatCFA(product.originalPrice)}
               </span>
             )}
           </div>
 
           <button
+            type="button"
             onClick={() => onAddToCart(product)}
-            className="px-3 py-1.5 bg-slate-900 hover:bg-orange-600 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-2xs"
+            className="px-3 py-1.5 bg-slate-900 hover:bg-orange-600 text-white rounded-xl text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-2xs cursor-pointer"
           >
             <ShoppingBag className="w-3.5 h-3.5" />
             <span>Ajouter</span>

@@ -73,59 +73,20 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({
   // If already authenticated, show the Admin Dashboard full-screen
   if (currentAdmin) {
     return (
-      <div className="min-h-screen bg-slate-900 text-slate-100 flex flex-col">
-        {/* Top Navbar */}
-        <header className="bg-slate-950 border-b border-slate-800 px-4 sm:px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div
-              onClick={() => navigateTo('store')}
-              className="cursor-pointer"
-              title="Retour à la boutique"
-            >
-              <MortutoLogo size="sm" showSubtitle={false} />
-            </div>
-            <div className="hidden sm:flex items-center space-x-2 text-xs text-slate-400 border-l border-slate-800 pl-4">
-              <ShieldCheck className="w-4 h-4 text-orange-500" />
-              <span>Portail de Gestion & Administration</span>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <button
-              id="back-to-shop-btn"
-              onClick={() => navigateTo('store')}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
-            >
-              <ShoppingBag className="w-3.5 h-3.5 text-orange-400" />
-              <span>Voir la boutique</span>
-            </button>
-
-            <button
-              id="admin-logout-btn"
-              onClick={onLogout}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-rose-950/60 hover:bg-rose-900/80 text-rose-300 border border-rose-800/40 text-xs font-semibold transition-colors"
-            >
-              <span>Déconnexion</span>
-            </button>
-          </div>
-        </header>
-
-        {/* Dashboard Component */}
-        <AdminDashboard
-          isOpen={true}
-          onClose={() => navigateTo('store')}
-          currentAdmin={currentAdmin}
-          onLogout={onLogout}
-          products={products}
-          onAddProduct={onAddProduct}
-          onUpdateProduct={onUpdateProduct}
-          onDeleteProduct={onDeleteProduct}
-          admins={admins}
-          onAddAdmin={onAddAdmin}
-          orders={orders}
-          onUpdateOrderStatus={onUpdateOrderStatus}
-        />
-      </div>
+      <AdminDashboard
+        isOpen={true}
+        onClose={() => navigateTo('store')}
+        currentAdmin={currentAdmin}
+        onLogout={onLogout}
+        products={products}
+        onAddProduct={onAddProduct}
+        onUpdateProduct={onUpdateProduct}
+        onDeleteProduct={onDeleteProduct}
+        admins={admins}
+        onAddAdmin={onAddAdmin}
+        orders={orders}
+        onUpdateOrderStatus={onUpdateOrderStatus}
+      />
     );
   }
 

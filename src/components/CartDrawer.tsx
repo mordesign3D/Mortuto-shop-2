@@ -2,6 +2,7 @@ import React from 'react';
 import { CartItem } from '../types';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, ShieldCheck, MessageCircle } from 'lucide-react';
 import { openWhatsAppCart } from '../utils/whatsapp';
+import { formatCFA } from '../utils/formatters';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -24,9 +25,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
 
   const cartTotalItemsCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const cartSubtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const freeShippingThreshold = 80;
+  const freeShippingThreshold = 50000;
   const missingForFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
-  const shippingCost = cartSubtotal >= freeShippingThreshold || cartItems.length === 0 ? 0 : 4.90;
+  const shippingCost = cartSubtotal >= freeShippingThreshold || cartItems.length === 0 ? 0 : 2500;
   const cartTotal = cartSubtotal + shippingCost;
 
   return (
@@ -39,8 +40,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <h2 className="text-base font-bold text-slate-900">Mon Panier ({cartTotalItemsCount})</h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors"
+            className="p-2 rounded-full hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
@@ -50,7 +52,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
         <div className="bg-orange-50/70 p-3.5 border-b border-orange-100 text-xs">
           {missingForFreeShipping > 0 ? (
             <p className="text-orange-950 font-medium text-center">
-              Plus que <span className="font-bold text-orange-700">{missingForFreeShipping.toFixed(2)} €</span> pour la <span className="font-bold">livraison gratuite</span> !
+              Plus que <span className="font-bold text-orange-700">{formatCFA(missingForFreeShipping)}</span> pour la <span className="font-bold">livraison gratuite</span> !
             </p>
           ) : (
             <p className="text-emerald-700 font-bold text-center flex items-center justify-center space-x-1">
@@ -94,29 +96,33 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                     {item.selectedColor && <span>Couleur: {item.selectedColor}</span>}
                   </div>
                   <span className="text-xs font-extrabold text-slate-900 block mt-1">
-                    {(item.product.price * item.quantity).toFixed(2)} €
+                    {formatCFA(item.product.price * item.quantity)}
                   </span>
                 </div>
 
                 <div className="flex items-center space-x-2 bg-slate-100 rounded-xl p-1 shrink-0">
                   <button
+                    type="button"
                     onClick={() => onUpdateQuantity(index, item.quantity - 1)}
-                    className="p-1 hover:bg-white rounded-lg text-slate-600 transition-colors"
+                    className="p-1 hover:bg-white rounded-lg text-slate-600 transition-colors cursor-pointer"
                   >
                     <Minus className="w-3 h-3" />
                   </button>
                   <span className="text-xs font-bold text-slate-800 px-1">{item.quantity}</span>
                   <button
+                    type="button"
                     onClick={() => onUpdateQuantity(index, item.quantity + 1)}
-                    className="p-1 hover:bg-white rounded-lg text-slate-600 transition-colors"
+                    className="p-1 hover:bg-white rounded-lg text-slate-600 transition-colors cursor-pointer"
                   >
                     <Plus className="w-3 h-3" />
                   </button>
                 </div>
 
                 <button
+                  type="button"
                   onClick={() => onRemoveItem(index)}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors"
+                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-lg transition-colors cursor-pointer"
+                  title="Supprimer"
                 >
                   <Trash2 className="w-4 h-4" />
                 </button>
@@ -131,25 +137,26 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
             <div className="space-y-1.5 text-xs text-slate-600">
               <div className="flex justify-between">
                 <span>Sous-total</span>
-                <span className="font-semibold text-slate-900">{cartSubtotal.toFixed(2)} €</span>
+                <span className="font-semibold text-slate-900">{formatCFA(cartSubtotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span>Frais de livraison</span>
                 <span className="font-semibold text-slate-900">
-                  {shippingCost === 0 ? 'Gratuit' : `${shippingCost.toFixed(2)} €`}
+                  {shippingCost === 0 ? 'Gratuit' : formatCFA(shippingCost)}
                 </span>
               </div>
               <div className="flex justify-between text-sm font-black text-slate-900 pt-2 border-t border-slate-200">
-                <span>Total TTC</span>
-                <span className="text-orange-600">{cartTotal.toFixed(2)} €</span>
+                <span>Total</span>
+                <span className="text-orange-600">{formatCFA(cartTotal)}</span>
               </div>
             </div>
 
             <div className="space-y-2 pt-1">
               <button
                 id="checkout-proceed-btn"
+                type="button"
                 onClick={onProceedToCheckout}
-                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors"
+                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4" />
                 <span>Commander via WhatsApp Business</span>
@@ -157,8 +164,9 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
               </button>
 
               <button
+                type="button"
                 onClick={() => openWhatsAppCart(cartItems, cartTotal)}
-                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition-colors border border-slate-200"
+                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition-colors border border-slate-200 cursor-pointer"
               >
                 <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
                 <span>Envoyer le panier brut sur WhatsApp</span>

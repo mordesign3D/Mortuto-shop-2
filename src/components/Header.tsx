@@ -47,7 +47,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Banner Announcement */}
       <div className="bg-slate-900 text-slate-100 text-[11px] py-1.5 px-4 text-center font-medium tracking-wide flex items-center justify-center space-x-2">
         <Sparkles className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-        <span>Boutique Officielle mortuto-shop • Livraison OFFERTE dès 80€ • Retours faciles sous 30j</span>
+        <span>Boutique Officielle mortuto-shop • Livraison OFFERTE dès 50 000 FCFA • Retours faciles sous 30j</span>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

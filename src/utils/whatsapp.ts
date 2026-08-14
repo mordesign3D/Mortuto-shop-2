@@ -1,4 +1,5 @@
 import { Order, CartItem } from '../types';
+import { formatCFA } from './formatters';
 
 export const WHATSAPP_BUSINESS_URL = "https://wa.me/message/QJ4AAYTVECKYG1";
 
@@ -9,7 +10,7 @@ export function buildWhatsAppOrderMessage(order: Order): string {
         `• ${item.quantity}x *${item.product.name}*` +
         (item.selectedSize ? ` [Taille: ${item.selectedSize}]` : '') +
         (item.selectedColor ? ` [Couleur: ${item.selectedColor}]` : '') +
-        ` → ${(item.product.price * item.quantity).toFixed(2)} €`
+        ` → ${formatCFA(item.product.price * item.quantity)}`
     )
     .join('\n');
 
@@ -27,7 +28,7 @@ export function buildWhatsAppOrderMessage(order: Order): string {
 📦 *ARTICLES:*
 ${itemsText}
 
-💰 *TOTAL TTC:* *${order.totalAmount.toFixed(2)} €*
+💰 *TOTAL:* *${formatCFA(order.totalAmount)}*
 ----------------------------------
 Bonjour mortuto-shop ! Je viens d'effectuer cette commande et je souhaite la valider avec vous sur WhatsApp.`;
 
@@ -41,7 +42,7 @@ export function buildWhatsAppCartMessage(cartItems: CartItem[], totalAmount: num
         `• ${item.quantity}x *${item.product.name}*` +
         (item.selectedSize ? ` [Taille: ${item.selectedSize}]` : '') +
         (item.selectedColor ? ` [Couleur: ${item.selectedColor}]` : '') +
-        ` → ${(item.product.price * item.quantity).toFixed(2)} €`
+        ` → ${formatCFA(item.product.price * item.quantity)}`
     )
     .join('\n');
 
@@ -51,7 +52,7 @@ export function buildWhatsAppCartMessage(cartItems: CartItem[], totalAmount: num
 📦 *ARTICLES:*
 ${itemsText}
 
-💰 *ESTIMATION TOTAL:* *${totalAmount.toFixed(2)} €*
+💰 *ESTIMATION TOTAL:* *${formatCFA(totalAmount)}*
 ----------------------------------
 Bonjour mortuto-shop ! Je souhaite commander ces articles présents dans mon panier.`;
 

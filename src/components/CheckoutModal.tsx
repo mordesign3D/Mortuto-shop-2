@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { CartItem, Order } from '../types';
 import { MortutoLogo } from './MortutoLogo';
-import { X, Lock, Truck, CheckCircle2, MessageCircle, ExternalLink } from 'lucide-react';
-import { openWhatsAppOrder, WHATSAPP_BUSINESS_URL } from '../utils/whatsapp';
+import { X, Truck, CheckCircle2, MessageCircle, ExternalLink } from 'lucide-react';
+import { openWhatsAppOrder } from '../utils/whatsapp';
+import { formatCFA } from '../utils/formatters';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -22,16 +23,17 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [checkoutForm, setCheckoutForm] = useState({
     fullName: 'Mame Niang',
     email: 'mame.niang@gmail.com',
-    address: '15 Avenue Montaigne',
-    city: 'Paris',
-    postalCode: '75008'
+    address: '15 Avenue Principale',
+    city: 'Dakar',
+    postalCode: '10000'
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  const shippingCost = subtotal >= 80 ? 0 : 4.90;
+  const freeShippingThreshold = 50000;
+  const shippingCost = subtotal >= freeShippingThreshold ? 0 : 2500;
   const total = subtotal + shippingCost;
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -66,7 +68,11 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <MessageCircle className="w-5 h-5 text-emerald-600" />
             <h2 className="text-base font-bold text-slate-900">Commande via WhatsApp Business</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-200 text-slate-600">
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-slate-200 text-slate-600 cursor-pointer"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -84,14 +90,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
             <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-left text-xs max-w-md mx-auto space-y-1 text-emerald-950">
               <p><span className="font-bold">N° de commande :</span> {completedOrder.id}</p>
-              <p><span className="font-bold">Montant Total :</span> {completedOrder.totalAmount.toFixed(2)} €</p>
+              <p><span className="font-bold">Montant Total :</span> {formatCFA(completedOrder.totalAmount)}</p>
               <p><span className="font-bold">WhatsApp Vendeur :</span> mortuto-shop Business</p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <button
+                type="button"
                 onClick={() => openWhatsAppOrder(completedOrder)}
-                className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors"
+                className="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors cursor-pointer"
               >
                 <MessageCircle className="w-4 h-4 fill-white" />
                 <span>Ouvrir WhatsApp à nouveau</span>
@@ -99,8 +106,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </button>
 
               <button
+                type="button"
                 onClick={onClose}
-                className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-colors"
+                className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs transition-colors cursor-pointer"
               >
                 Fermer
               </button>
@@ -187,15 +195,15 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-2 text-xs">
               <div className="flex justify-between font-medium text-slate-600">
                 <span>Sous-total ({cartItems.length} article(s))</span>
-                <span>{subtotal.toFixed(2)} €</span>
+                <span>{formatCFA(subtotal)}</span>
               </div>
               <div className="flex justify-between font-medium text-slate-600">
-                <span>Livraison Colissimo</span>
-                <span>{shippingCost === 0 ? 'Gratuit' : `${shippingCost.toFixed(2)} €`}</span>
+                <span>Livraison Express</span>
+                <span>{shippingCost === 0 ? 'Gratuit' : formatCFA(shippingCost)}</span>
               </div>
               <div className="flex justify-between font-black text-slate-900 text-sm pt-2 border-t border-slate-200">
                 <span>Total à régler</span>
-                <span className="text-orange-600">{total.toFixed(2)} €</span>
+                <span className="text-orange-600">{formatCFA(total)}</span>
               </div>
             </div>
 
@@ -203,14 +211,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               id="checkout-whatsapp-btn"
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors"
+              className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors cursor-pointer"
             >
               {isSubmitting ? (
                 <span>Redirection vers WhatsApp Business...</span>
               ) : (
                 <>
                   <MessageCircle className="w-4 h-4" />
-                  <span>Envoyer la commande sur WhatsApp Business ({total.toFixed(2)} €)</span>
+                  <span>Envoyer la commande sur WhatsApp Business ({formatCFA(total)})</span>
                 </>
               )}
             </button>
