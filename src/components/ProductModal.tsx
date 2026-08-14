@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Product } from '../types';
-import { X, Heart, Star, ShoppingBag, Check, Tag, ChevronLeft, ChevronRight, Images } from 'lucide-react';
+import { X, Heart, Star, ShoppingBag, Check, Tag, ChevronLeft, ChevronRight, Images, Loader2 } from 'lucide-react';
 import { formatCFA } from '../utils/formatters';
 
 interface ProductModalProps {
@@ -22,6 +22,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   const imagesList = product.images && product.images.length > 0 ? product.images : [product.image];
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isImageLoading, setIsImageLoading] = useState(true);
 
   const [modalSize, setModalSize] = useState<string | undefined>(
     product.sizes ? product.sizes[0] : undefined
@@ -33,22 +34,48 @@ export const ProductModal: React.FC<ProductModalProps> = ({
 
   useEffect(() => {
     setActiveImageIndex(0);
+    setIsImageLoading(true);
     setModalSize(product.sizes ? product.sizes[0] : undefined);
     setModalColor(product.colors ? product.colors[0].name : undefined);
   }, [product]);
 
   const handlePrevImage = () => {
+    setIsImageLoading(true);
     setActiveImageIndex((prev) => (prev === 0 ? imagesList.length - 1 : prev - 1));
   };
 
   const handleNextImage = () => {
+    setIsImageLoading(true);
     setActiveImageIndex((prev) => (prev === imagesList.length - 1 ? 0 : prev + 1));
+  };
+
+  const handleSelectThumbnail = (idx: number) => {
+    if (idx !== activeImageIndex) {
+      setIsImageLoading(true);
+      setActiveImageIndex(idx);
+    }
   };
 
   const handleAdd = () => {
     onAddToCart(product, modalSize, modalColor);
     setAddedNotice(true);
     setTimeout(() => setAddedNotice(false), 2000);
+  };
+
+  // Dynamic label based on product category
+  const getVariantLabel = (category: string) => {
+    switch (category) {
+      case 'Électronique':
+        return 'Capacité / Modèle :';
+      case 'Chaussures':
+        return 'Pointure :';
+      case 'Vêtements':
+        return 'Taille disponible :';
+      case 'Maison':
+        return 'Format / Dimension :';
+      default:
+        return 'Option disponible :';
+    }
   };
 
   return (
@@ -68,11 +95,21 @@ export const ProductModal: React.FC<ProductModalProps> = ({
         <div className="md:w-1/2 bg-slate-100 flex flex-col justify-between p-4 relative min-h-[300px] sm:min-h-[380px]">
           {/* Main Selected Image Container */}
           <div className="relative w-full flex-1 rounded-2xl overflow-hidden bg-slate-200/50 shadow-inner flex items-center justify-center">
+            {/* Shimmer / Skeleton loader while image is loading */}
+            {isImageLoading && (
+              <div className="absolute inset-0 bg-slate-200 animate-pulse flex items-center justify-center z-5">
+                <Loader2 className="w-6 h-6 text-orange-500 animate-spin" />
+              </div>
+            )}
+
             <img
               src={imagesList[activeImageIndex] || product.image}
               alt={`${product.name} - Photo ${activeImageIndex + 1}`}
               referrerPolicy="no-referrer"
-              className="w-full h-full object-cover max-h-[380px] transition-all duration-300"
+              onLoad={() => setIsImageLoading(false)}
+              className={`w-full h-full object-cover max-h-[380px] transition-all duration-300 ${
+                isImageLoading ? 'opacity-0 scale-95' : 'opacity-100 scale-100'
+              }`}
             />
 
             {/* Badges Overlay */}
@@ -136,7 +173,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                   <button
                     key={idx}
                     type="button"
-                    onClick={() => setActiveImageIndex(idx)}
+                    onClick={() => handleSelectThumbnail(idx)}
                     className={`relative w-14 h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer shadow-xs ${
                       activeImageIndex === idx
                         ? 'border-orange-600 scale-105 ring-2 ring-orange-500/20'
@@ -195,10 +232,12 @@ export const ProductModal: React.FC<ProductModalProps> = ({
               {product.description}
             </p>
 
-            {/* Size choice */}
+            {/* Dynamic Variant choice (Sizes / Capacities / Shoe sizes) */}
             {product.sizes && product.sizes.length > 0 && (
               <div className="space-y-2">
-                <label className="text-xs font-bold text-slate-800 block">Taille :</label>
+                <label className="text-xs font-bold text-slate-800 block">
+                  {getVariantLabel(product.category)}
+                </label>
                 <div className="flex flex-wrap gap-2">
                   {product.sizes.map((size) => (
                     <button
@@ -207,7 +246,7 @@ export const ProductModal: React.FC<ProductModalProps> = ({
                       onClick={() => setModalSize(size)}
                       className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                         modalSize === size
-                          ? 'bg-slate-900 text-white shadow-xs'
+                          ? 'bg-slate-900 text-white shadow-xs scale-105'
                           : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
                       }`}
                     >

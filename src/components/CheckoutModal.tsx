@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { CartItem, Order } from '../types';
 import { MortutoLogo } from './MortutoLogo';
-import { X, Truck, CheckCircle2, MessageCircle, ExternalLink } from 'lucide-react';
+import { X, Truck, CheckCircle2, MessageCircle, ExternalLink, Loader2 } from 'lucide-react';
 import { openWhatsAppOrder } from '../utils/whatsapp';
 import { formatCFA } from '../utils/formatters';
 
@@ -56,7 +56,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
       // Trigger redirection to WhatsApp Business account
       openWhatsAppOrder(newOrder);
-    }, 800);
+    }, 750);
   };
 
   return (
@@ -78,14 +78,14 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         </div>
 
         {completedOrder ? (
-          <div className="p-8 text-center space-y-4 my-auto">
+          <div className="p-8 text-center space-y-4 my-auto animate-fade-in">
             <MortutoLogo size="md" className="justify-center mx-auto" />
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-xs">
               <CheckCircle2 className="w-10 h-10 text-emerald-600" />
             </div>
             <h3 className="text-xl font-extrabold text-slate-900">Commande Transmise sur WhatsApp !</h3>
             <p className="text-xs text-slate-600 max-w-md mx-auto leading-relaxed">
-              Merci <span className="font-bold text-slate-900">{completedOrder.shippingAddress.fullName}</span> ! Votre récapitulatif de commande a été ouvert sur WhatsApp Business.
+              Merci <span className="font-bold text-slate-900">{completedOrder.shippingAddress.fullName}</span> ! Votre récapitulatif de commande a été préparé et transmis sur WhatsApp Business.
             </p>
 
             <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-left text-xs max-w-md mx-auto space-y-1 text-emerald-950">
@@ -211,10 +211,13 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               id="checkout-whatsapp-btn"
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors cursor-pointer"
+              className="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors cursor-pointer disabled:opacity-80"
             >
               {isSubmitting ? (
-                <span>Redirection vers WhatsApp Business...</span>
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin text-white" />
+                  <span>Préparation et ouverture de WhatsApp Business...</span>
+                </>
               ) : (
                 <>
                   <MessageCircle className="w-4 h-4" />

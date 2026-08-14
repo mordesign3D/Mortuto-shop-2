@@ -12,14 +12,17 @@ import {
   Tag,
   Coins,
   Percent,
-  Image as ImageIcon,
   Check,
   LogOut,
   ShoppingBag,
   Shield,
   Layers,
   Images,
-  Upload
+  Upload,
+  Loader2,
+  Sparkles,
+  Zap,
+  Info
 } from 'lucide-react';
 import { formatCFA } from '../utils/formatters';
 
@@ -67,7 +70,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const [activeTab, setActiveTab] = useState<'products' | 'admins' | 'orders'>('products');
 
-  // Product Form State (Stored as Strings for zero typing lags and smooth input)
+  // Product Form State
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productName, setProductName] = useState('');
   const [productCategory, setProductCategory] = useState('Vêtements');
@@ -85,15 +88,51 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   ]);
 
   const [productDescription, setProductDescription] = useState('Produit de haute qualité sélectionné par mortuto-shop.');
+
+  // Category specific variant states
+  const [enableSizes, setEnableSizes] = useState(true);
   const [productSizes, setProductSizes] = useState('S, M, L, XL');
   const [productColors, setProductColors] = useState('Noir, Blanc, Beige');
+  const [electronicCapacity, setElectronicCapacity] = useState('');
+  
+  // Loading & animated feedback states
+  const [isSavingProduct, setIsSavingProduct] = useState(false);
   const [successNotice, setSuccessNotice] = useState('');
 
   // Admin Creation Form State
   const [newAdminUsername, setNewAdminUsername] = useState('');
   const [newAdminPassword, setNewAdminPassword] = useState('');
   const [newAdminRole, setNewAdminRole] = useState<'Super Admin' | 'Gestionnaire'>('Gestionnaire');
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const [adminNotice, setAdminNotice] = useState('');
+
+  // Dynamic updates when category changes
+  const handleCategoryChange = (newCategory: string) => {
+    setProductCategory(newCategory);
+    
+    if (newCategory === 'Électronique') {
+      // For electronics: garment size is masked
+      setEnableSizes(false);
+      setElectronicCapacity('128 Go, 256 Go');
+      setProductColors('Noir Mat, Argent Satiné, Blanc');
+    } else if (newCategory === 'Chaussures') {
+      setEnableSizes(true);
+      setProductSizes('39, 40, 41, 42, 43, 44');
+      setProductColors('Noir, Blanc, Marron');
+    } else if (newCategory === 'Vêtements') {
+      setEnableSizes(true);
+      setProductSizes('S, M, L, XL');
+      setProductColors('Noir, Blanc, Beige');
+    } else if (newCategory === 'Accessoires') {
+      setEnableSizes(false);
+      setProductColors('Marron Cognac, Noir Intense, Doré');
+    } else if (newCategory === 'Maison') {
+      setEnableSizes(false);
+      setProductColors('Blanc chaud, Laiton brossé, Bois clair');
+    } else {
+      setEnableSizes(false);
+    }
+  };
 
   const resetProductForm = () => {
     setEditingProduct(null);
@@ -110,8 +149,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       PRESET_PRODUCT_IMAGES[2]
     ]);
     setProductDescription('Produit de haute qualité sélectionné par mortuto-shop.');
+    setEnableSizes(true);
     setProductSizes('S, M, L, XL');
     setProductColors('Noir, Blanc, Beige');
+    setElectronicCapacity('');
   };
 
   const handleEditClick = (p: Product) => {
@@ -130,12 +171,24 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
         : '30000'
     );
     
-    // Set images list (from images array or single image)
+    // Set images list
     const existingImages = p.images && p.images.length > 0 ? [...p.images] : [p.image];
     setProductImages(existingImages);
     
     setProductDescription(p.description || '');
-    setProductSizes(p.sizes && p.sizes.length > 0 ? p.sizes.join(', ') : 'S, M, L');
+    
+    // Adapt sizes and category fields
+    if (p.category === 'Électronique') {
+      setEnableSizes(false);
+      setElectronicCapacity(p.sizes && p.sizes.length > 0 ? p.sizes.join(', ') : '');
+    } else if (p.sizes && p.sizes.length > 0) {
+      setEnableSizes(true);
+      setProductSizes(p.sizes.join(', '));
+    } else {
+      setEnableSizes(false);
+      setProductSizes('');
+    }
+
     setProductColors(p.colors && p.colors.length > 0 ? p.colors.map(c => c.name).join(', ') : 'Noir, Blanc');
     setActiveTab('products');
   };
@@ -177,82 +230,101 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     e.preventDefault();
     if (!productName.trim()) return;
 
-    const parsedPrice = parseFloat(productPrice.replace(/\s/g, '').replace(',', '.')) || 0;
-    const finalCategory = productCategory === 'Autre' && customCategory.trim() ? customCategory.trim() : productCategory;
-    const parsedDiscount = isPromo ? (parseFloat(discountPercent.replace(',', '.')) || undefined) : undefined;
-    const parsedOriginalPrice = isPromo
-      ? (parseFloat(originalPrice.replace(/\s/g, '').replace(',', '.')) || (parsedPrice > 0 ? Math.round(parsedPrice * 1.25) : undefined))
-      : undefined;
+    setIsSavingProduct(true);
 
-    const sizesArr = productSizes.split(',').map(s => s.trim()).filter(Boolean);
-    const colorsArr = productColors.split(',').map(c => ({ name: c.trim(), hex: '#1F2937' })).filter(c => c.name);
+    setTimeout(() => {
+      const parsedPrice = parseFloat(productPrice.replace(/\s/g, '').replace(',', '.')) || 0;
+      const finalCategory = productCategory === 'Autre' && customCategory.trim() ? customCategory.trim() : productCategory;
+      const parsedDiscount = isPromo ? (parseFloat(discountPercent.replace(',', '.')) || undefined) : undefined;
+      const parsedOriginalPrice = isPromo
+        ? (parseFloat(originalPrice.replace(/\s/g, '').replace(',', '.')) || (parsedPrice > 0 ? Math.round(parsedPrice * 1.25) : undefined))
+        : undefined;
 
-    const validImages = productImages.filter(img => img.trim().length > 0);
-    const finalImages = validImages.length > 0 ? validImages : [PRESET_PRODUCT_IMAGES[0]];
-    const primaryImage = finalImages[0];
+      // Extract sizes/capacities based on category
+      let sizesArr: string[] = [];
+      if (finalCategory === 'Électronique') {
+        sizesArr = electronicCapacity.split(',').map(s => s.trim()).filter(Boolean);
+      } else if (enableSizes && productSizes) {
+        sizesArr = productSizes.split(',').map(s => s.trim()).filter(Boolean);
+      }
 
-    if (editingProduct) {
-      const updated: Product = {
-        ...editingProduct,
-        name: productName.trim(),
-        category: finalCategory,
-        price: parsedPrice,
-        isPromo,
-        discountPercent: parsedDiscount,
-        originalPrice: parsedOriginalPrice,
-        image: primaryImage,
-        images: finalImages,
-        description: productDescription.trim(),
-        sizes: sizesArr.length > 0 ? sizesArr : undefined,
-        colors: colorsArr.length > 0 ? colorsArr : undefined
-      };
-      onUpdateProduct(updated);
-      setSuccessNotice('Produit mis à jour avec succès !');
-    } else {
-      const newProd: Product = {
-        id: `p-${Date.now()}`,
-        name: productName.trim(),
-        category: finalCategory,
-        price: parsedPrice,
-        isPromo,
-        discountPercent: parsedDiscount,
-        originalPrice: parsedOriginalPrice,
-        rating: 5.0,
-        reviewsCount: 1,
-        image: primaryImage,
-        images: finalImages,
-        description: productDescription.trim(),
-        inStock: true,
-        isNew: true,
-        tags: ['Nouveau', 'mortuto-shop'],
-        sizes: sizesArr.length > 0 ? sizesArr : undefined,
-        colors: colorsArr.length > 0 ? colorsArr : undefined
-      };
-      onAddProduct(newProd);
-      setSuccessNotice('Nouveau produit avec photos ajouté à la boutique !');
-    }
+      const colorsArr = productColors
+        .split(',')
+        .map(c => ({ name: c.trim(), hex: '#1F2937' }))
+        .filter(c => c.name);
 
-    setTimeout(() => setSuccessNotice(''), 3500);
-    resetProductForm();
+      const validImages = productImages.filter(img => img.trim().length > 0);
+      const finalImages = validImages.length > 0 ? validImages : [PRESET_PRODUCT_IMAGES[0]];
+      const primaryImage = finalImages[0];
+
+      if (editingProduct) {
+        const updated: Product = {
+          ...editingProduct,
+          name: productName.trim(),
+          category: finalCategory,
+          price: parsedPrice,
+          isPromo,
+          discountPercent: parsedDiscount,
+          originalPrice: parsedOriginalPrice,
+          image: primaryImage,
+          images: finalImages,
+          description: productDescription.trim(),
+          sizes: sizesArr.length > 0 ? sizesArr : undefined,
+          colors: colorsArr.length > 0 ? colorsArr : undefined
+        };
+        onUpdateProduct(updated);
+        setSuccessNotice('Produit mis à jour avec succès !');
+      } else {
+        const newProd: Product = {
+          id: `p-${Date.now()}`,
+          name: productName.trim(),
+          category: finalCategory,
+          price: parsedPrice,
+          isPromo,
+          discountPercent: parsedDiscount,
+          originalPrice: parsedOriginalPrice,
+          rating: 5.0,
+          reviewsCount: 1,
+          image: primaryImage,
+          images: finalImages,
+          description: productDescription.trim(),
+          inStock: true,
+          isNew: true,
+          tags: ['Nouveau', 'mortuto-shop', finalCategory],
+          sizes: sizesArr.length > 0 ? sizesArr : undefined,
+          colors: colorsArr.length > 0 ? colorsArr : undefined
+        };
+        onAddProduct(newProd);
+        setSuccessNotice('Nouveau produit ajouté avec succès au catalogue !');
+      }
+
+      setIsSavingProduct(false);
+      setTimeout(() => setSuccessNotice(''), 3500);
+      resetProductForm();
+    }, 450);
   };
 
   const handleCreateAdmin = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newAdminUsername.trim() || !newAdminPassword.trim()) return;
 
-    const newAdmin: AdminUser = {
-      id: `admin-${Date.now()}`,
-      username: newAdminUsername.trim(),
-      passwordHash: newAdminPassword.trim(),
-      role: newAdminRole,
-      createdAt: new Date().toLocaleDateString('fr-FR')
-    };
+    setIsCreatingAdmin(true);
+    setTimeout(() => {
+      const newAdmin: AdminUser = {
+        id: `admin-${Date.now()}`,
+        username: newAdminUsername.trim(),
+        passwordHash: newAdminPassword.trim(),
+        role: newAdminRole,
+        createdAt: new Date().toLocaleDateString('fr-FR')
+      };
 
-    onAddAdmin(newAdmin);
-    setAdminNotice(`Compte administrateur "${newAdmin.username}" créé avec succès !`);
-    setNewAdminUsername('');
-    setNewAdminPassword('');
-    setTimeout(() => setAdminNotice(''), 3500);
+      onAddAdmin(newAdmin);
+      setIsCreatingAdmin(false);
+      setAdminNotice(`Compte administrateur "${newAdmin.username}" créé avec succès !`);
+      setNewAdminUsername('');
+      setNewAdminPassword('');
+      setTimeout(() => setAdminNotice(''), 3500);
+    }, 400);
   };
 
   return (
@@ -265,10 +337,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <div className="border-l border-slate-700 pl-3">
               <h2 className="text-sm font-bold text-white flex items-center space-x-1.5">
                 <Shield className="w-4 h-4 text-orange-500" />
-                <span>Panneau Administrateur</span>
+                <span>Panneau d'Administration</span>
               </h2>
               <p className="text-[11px] text-slate-400">
-                Connecté en tant que <span className="font-bold text-orange-400">{currentAdmin.username}</span> ({currentAdmin.role})
+                Connecté : <span className="font-bold text-orange-400">{currentAdmin.username}</span> ({currentAdmin.role})
               </p>
             </div>
           </div>
@@ -277,7 +349,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <button
               onClick={onClose}
               className="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
-              title="Retourner au catalogue de la boutique"
+              title="Retourner au catalogue"
             >
               <ShoppingBag className="w-3.5 h-3.5 text-orange-400" />
               <span className="hidden sm:inline">Boutique</span>
@@ -349,10 +421,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               {/* Product Form Card */}
               <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 space-y-4 shadow-2xs">
                 <div className="flex items-center justify-between border-b border-slate-200 pb-3">
-                  <h3 className="text-sm font-bold text-slate-900 flex items-center space-x-2">
+                  <div className="flex items-center space-x-2">
                     {editingProduct ? <Edit className="w-4 h-4 text-orange-600" /> : <Plus className="w-4 h-4 text-orange-600" />}
-                    <span>{editingProduct ? 'Modifier le produit' : 'Ajouter un nouveau produit'}</span>
-                  </h3>
+                    <h3 className="text-sm font-bold text-slate-900">
+                      {editingProduct ? 'Modifier le produit' : 'Ajouter un nouveau produit'}
+                    </h3>
+                  </div>
                   {editingProduct && (
                     <button
                       type="button"
@@ -365,8 +439,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 </div>
 
                 {successNotice && (
-                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-2 animate-fade-in">
-                    <Check className="w-4 h-4 text-emerald-600" />
+                  <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-2 animate-fade-in shadow-xs">
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{successNotice}</span>
                   </div>
                 )}
@@ -382,7 +456,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         required
                         value={productName}
                         onChange={(e) => setProductName(e.target.value)}
-                        placeholder="Ex: Veste Cuir Mortuto Premium"
+                        placeholder="Ex: Écouteurs Bluetooth mortuto Studio"
                         className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
                       />
                     </div>
@@ -410,14 +484,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       <select
                         id="product-category-select"
                         value={productCategory}
-                        onChange={(e) => setProductCategory(e.target.value)}
+                        onChange={(e) => handleCategoryChange(e.target.value)}
                         className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-semibold"
                       >
                         <option value="Vêtements">Vêtements</option>
                         <option value="Chaussures">Chaussures</option>
+                        <option value="Électronique">Électronique / Produits électriques</option>
                         <option value="Accessoires">Accessoires</option>
-                        <option value="Électronique">Électronique</option>
-                        <option value="Maison">Maison</option>
+                        <option value="Maison">Maison & Déco</option>
                         <option value="Autre">Autre (Saisir ci-dessous)</option>
                       </select>
                     </div>
@@ -437,7 +511,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     )}
                   </div>
 
-                  {/* Section Baisse de Prix / Promotion */}
+                  {/* Promotion / Baisse de prix */}
                   <div className="p-4 bg-orange-50/70 border border-orange-200 rounded-2xl space-y-3">
                     <div className="flex items-center space-x-2">
                       <input
@@ -454,7 +528,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     </div>
 
                     {isPromo && (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 animate-fade-in">
                         <div>
                           <label className="text-xs font-bold text-slate-700 block mb-1">
                             Réduction (%)
@@ -508,14 +582,13 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                       {productImages.map((imgUrl, index) => (
                         <div
                           key={index}
-                          className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200"
+                          className="flex flex-col sm:flex-row items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200 transition-all hover:border-slate-300"
                         >
                           <div className="flex items-center space-x-2 shrink-0">
-                            <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center">
+                            <span className="w-6 h-6 rounded-full bg-slate-900 text-white font-bold text-[11px] flex items-center justify-center shadow-2xs">
                               {index + 1}
                             </span>
-                            {/* Preview thumbnail */}
-                            <div className="w-14 h-14 rounded-xl bg-white border border-slate-300 overflow-hidden shrink-0 shadow-xs">
+                            <div className="w-14 h-14 rounded-xl bg-white border border-slate-300 overflow-hidden shrink-0 shadow-xs relative">
                               <img src={imgUrl} alt={`Photo ${index + 1}`} className="w-full h-full object-cover" />
                             </div>
                           </div>
@@ -531,7 +604,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                             <div className="flex items-center space-x-2">
                               <label className="px-2.5 py-1 bg-slate-200 hover:bg-slate-300 rounded-lg text-[10px] font-bold text-slate-700 cursor-pointer flex items-center space-x-1 transition-colors">
                                 <Upload className="w-3 h-3" />
-                                <span>Charger une photo</span>
+                                <span>Charger depuis l'appareil</span>
                                 <input
                                   type="file"
                                   accept="image/*"
@@ -565,84 +638,265 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                         className="w-full py-2.5 border-2 border-dashed border-orange-300 hover:border-orange-500 bg-orange-50/50 hover:bg-orange-50 text-orange-700 rounded-xl text-xs font-bold flex items-center justify-center space-x-1.5 transition-all cursor-pointer"
                       >
                         <Plus className="w-4 h-4" />
-                        <span>Ajouter une autre photo ({productImages.length + 1}/5)</span>
+                        <span>Ajouter un emplacement photo ({productImages.length + 1}/5)</span>
                       </button>
                     )}
+                  </div>
 
-                    {/* Quick Preset Images Selector */}
-                    <div className="pt-2 border-t border-slate-100">
-                      <span className="text-[11px] text-slate-500 font-medium block mb-1">
-                        Ou choisissez rapidement des photos modèles :
-                      </span>
-                      <div className="flex items-center space-x-2 overflow-x-auto pb-1 no-scrollbar">
-                        {PRESET_PRODUCT_IMAGES.map((img, idx) => (
-                          <button
-                            key={idx}
-                            type="button"
-                            onClick={() => {
-                              if (productImages.length < 5) {
-                                setProductImages(prev => [...prev, img]);
-                              } else {
-                                handleUpdateImageSlot(productImages.length - 1, img);
-                              }
-                            }}
-                            className="w-11 h-11 rounded-lg overflow-hidden border border-slate-200 hover:border-orange-500 shrink-0 cursor-pointer transition-transform hover:scale-105"
-                            title="Ajouter comme photo"
-                          >
-                            <img src={img} alt="Preset" className="w-full h-full object-cover" />
-                          </button>
-                        ))}
+                  {/* DYNAMIC FIELDS ADAPTED BY CATEGORY */}
+                  <div className="p-4 bg-slate-100/70 border border-slate-200 rounded-2xl space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold text-slate-900 flex items-center space-x-1.5">
+                        <Sparkles className="w-4 h-4 text-orange-600" />
+                        <span>Options & Déclinaisons adaptées à : <span className="text-orange-600 font-extrabold">{productCategory}</span></span>
+                      </h4>
+                    </div>
+
+                    {/* CASE 1: ÉLECTRONIQUE (Tailleur S/M/L MASQUÉ) */}
+                    {productCategory === 'Électronique' ? (
+                      <div className="space-y-3 animate-fade-in">
+                        {/* Notice for electronics */}
+                        <div className="p-3 bg-blue-50 border border-blue-200 text-blue-900 rounded-xl text-xs flex items-start space-x-2">
+                          <Zap className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                          <div>
+                            <span className="font-bold">Logique Électronique appliquée :</span> Le champ "Taille" (S/M/L) est automatiquement masqué car non pertinent pour les appareils électroniques.
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
+                            Capacité / Stockage / Modèle (optionnel, séparé par des virgules)
+                          </label>
+                          <input
+                            id="electronic-capacity-input"
+                            type="text"
+                            value={electronicCapacity}
+                            onChange={(e) => setElectronicCapacity(e.target.value)}
+                            placeholder="Ex: 64 Go, 128 Go, 256 Go ou Standard, Pro"
+                            className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                          />
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            <span className="text-[10px] text-slate-400 font-medium mr-1 py-0.5">Remplissage rapide :</span>
+                            <button
+                              type="button"
+                              onClick={() => setElectronicCapacity('128 Go, 256 Go, 512 Go')}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-700 hover:border-orange-400"
+                            >
+                              128 Go, 256 Go, 512 Go
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setElectronicCapacity('Standard, Pro, Max')}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-700 hover:border-orange-400"
+                            >
+                              Standard, Pro, Max
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setElectronicCapacity('')}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-500 hover:border-slate-400"
+                            >
+                              Modèle Unique (aucun)
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
+                            Couleurs / Finitions (ex: Noir Mat, Argent, Blanc)
+                          </label>
+                          <input
+                            id="product-colors-input"
+                            type="text"
+                            value={productColors}
+                            onChange={(e) => setProductColors(e.target.value)}
+                            placeholder="Noir Mat, Argent, Blanc"
+                            className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                          />
+                        </div>
                       </div>
-                    </div>
+                    ) : productCategory === 'Chaussures' ? (
+                      /* CASE 2: CHAUSSURES (Pointures) */
+                      <div className="space-y-3 animate-fade-in">
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
+                            Pointures disponibles (séparées par des virgules) *
+                          </label>
+                          <input
+                            id="product-sizes-input"
+                            type="text"
+                            value={productSizes}
+                            onChange={(e) => setProductSizes(e.target.value)}
+                            placeholder="39, 40, 41, 42, 43, 44"
+                            className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-semibold"
+                          />
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            <span className="text-[10px] text-slate-400 font-medium mr-1 py-0.5">Presets :</span>
+                            <button
+                              type="button"
+                              onClick={() => setProductSizes('39, 40, 41, 42, 43, 44, 45')}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-700 hover:border-orange-400"
+                            >
+                              39 à 45 (Homme/Unisexe)
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setProductSizes('36, 37, 38, 39, 40, 41')}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-700 hover:border-orange-400"
+                            >
+                              36 à 41 (Femme/Unisexe)
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
+                            Couleurs disponibles
+                          </label>
+                          <input
+                            id="product-colors-input"
+                            type="text"
+                            value={productColors}
+                            onChange={(e) => setProductColors(e.target.value)}
+                            placeholder="Blanc Pur, Noir, Marron"
+                            className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                          />
+                        </div>
+                      </div>
+                    ) : productCategory === 'Vêtements' ? (
+                      /* CASE 3: VÊTEMENTS (Tailles textiles) */
+                      <div className="space-y-3 animate-fade-in">
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
+                            Tailles textiles disponibles *
+                          </label>
+                          <input
+                            id="product-sizes-input"
+                            type="text"
+                            value={productSizes}
+                            onChange={(e) => setProductSizes(e.target.value)}
+                            placeholder="S, M, L, XL"
+                            className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden font-semibold"
+                          />
+                          <div className="flex flex-wrap gap-1.5 mt-1.5">
+                            <span className="text-[10px] text-slate-400 font-medium mr-1 py-0.5">Presets :</span>
+                            <button
+                              type="button"
+                              onClick={() => setProductSizes('S, M, L, XL')}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-700 hover:border-orange-400"
+                            >
+                              S, M, L, XL
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setProductSizes('XS, S, M, L, XL, XXL')}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-700 hover:border-orange-400"
+                            >
+                              XS à XXL
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setProductSizes('Taille Unique')}
+                              className="px-2 py-0.5 rounded-md bg-white border border-slate-200 text-[10px] font-semibold text-slate-700 hover:border-orange-400"
+                            >
+                              Taille Unique
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
+                            Couleurs disponibles
+                          </label>
+                          <input
+                            id="product-colors-input"
+                            type="text"
+                            value={productColors}
+                            onChange={(e) => setProductColors(e.target.value)}
+                            placeholder="Noir, Blanc, Beige, Bleu Marine"
+                            className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      /* CASE 4: ACCESSOIRES, MAISON & AUTRE */
+                      <div className="space-y-3 animate-fade-in">
+                        <div className="flex items-center space-x-2">
+                          <input
+                            id="enable-sizes-toggle"
+                            type="checkbox"
+                            checked={enableSizes}
+                            onChange={(e) => setEnableSizes(e.target.checked)}
+                            className="w-4 h-4 text-orange-600 focus:ring-orange-500 rounded border-slate-300 cursor-pointer"
+                          />
+                          <label htmlFor="enable-sizes-toggle" className="text-xs font-bold text-slate-800 cursor-pointer">
+                            Cet article possède des variantes de tailles ou formats spécifiques
+                          </label>
+                        </div>
+
+                        {enableSizes && (
+                          <div className="pt-1 animate-fade-in">
+                            <label className="text-xs font-bold text-slate-700 block mb-1">
+                              Variantes / Formats (séparés par des virgules)
+                            </label>
+                            <input
+                              type="text"
+                              value={productSizes}
+                              onChange={(e) => setProductSizes(e.target.value)}
+                              placeholder="Ex: 38mm, 42mm ou Petit, Grand"
+                              className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                            />
+                          </div>
+                        )}
+
+                        <div>
+                          <label className="text-xs font-bold text-slate-700 block mb-1">
+                            Couleurs / Matières / Finitions
+                          </label>
+                          <input
+                            id="product-colors-input"
+                            type="text"
+                            value={productColors}
+                            onChange={(e) => setProductColors(e.target.value)}
+                            placeholder="Ex: Cuir Marron, Or, Argent"
+                            className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* Description & Options */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Tailles disponibles (séparées par des virgules)</label>
-                      <input
-                        id="product-sizes-input"
-                        type="text"
-                        value={productSizes}
-                        onChange={(e) => setProductSizes(e.target.value)}
-                        placeholder="S, M, L, XL"
-                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Couleurs (séparées par des virgules)</label>
-                      <input
-                        id="product-colors-input"
-                        type="text"
-                        value={productColors}
-                        onChange={(e) => setProductColors(e.target.value)}
-                        placeholder="Noir, Blanc, Beige"
-                        className="w-full px-3 py-2 text-xs bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                      />
-                    </div>
-
-                    <div className="sm:col-span-2">
-                      <label className="text-xs font-bold text-slate-700 block mb-1">Description du produit</label>
-                      <textarea
-                        id="product-description-input"
-                        rows={2}
-                        value={productDescription}
-                        onChange={(e) => setProductDescription(e.target.value)}
-                        placeholder="Présentation détaillée..."
-                        className="w-full p-3 text-xs bg-white border border-slate-300 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
-                      />
-                    </div>
+                  {/* Description */}
+                  <div>
+                    <label className="text-xs font-bold text-slate-700 block mb-1">Description détaillée du produit</label>
+                    <textarea
+                      id="product-description-input"
+                      rows={2}
+                      value={productDescription}
+                      onChange={(e) => setProductDescription(e.target.value)}
+                      placeholder="Présentation des caractéristiques, qualité et détails..."
+                      className="w-full p-3 text-xs bg-white border border-slate-300 rounded-xl resize-none focus:ring-2 focus:ring-orange-500 focus:outline-hidden"
+                    />
                   </div>
 
-                  {/* Submit button */}
+                  {/* Submit button with animated loading state */}
                   <button
                     id="save-product-btn"
                     type="submit"
-                    className="w-full py-3 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer"
+                    disabled={isSavingProduct}
+                    className="w-full py-3 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-bold rounded-xl text-xs transition-all shadow-md flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-75"
                   >
-                    <Plus className="w-4 h-4" />
-                    <span>{editingProduct ? 'Mettre à jour le produit' : 'Enregistrer et publier sur la boutique'}</span>
+                    {isSavingProduct ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin text-white" />
+                        <span>Enregistrement du produit en cours...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Plus className="w-4 h-4" />
+                        <span>{editingProduct ? 'Mettre à jour le produit' : 'Enregistrer et publier sur mortuto-shop'}</span>
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
@@ -675,7 +929,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                               </span>
                             )}
                           </div>
-                          <span className="text-[11px] text-slate-500 font-medium">Catégorie : {p.category}</span>
+                          <span className="text-[11px] text-slate-500 font-medium">
+                            Catégorie : {p.category} {p.sizes && p.sizes.length > 0 ? `(${p.sizes.join(', ')})` : ''}
+                          </span>
                         </div>
                       </div>
 
@@ -724,7 +980,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
                 {adminNotice && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs font-bold flex items-center space-x-2 animate-fade-in">
-                    <Check className="w-4 h-4 text-emerald-600" />
+                    <Check className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{adminNotice}</span>
                   </div>
                 )}
@@ -773,10 +1029,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                     <button
                       id="create-admin-btn"
                       type="submit"
-                      className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center space-x-2 cursor-pointer"
+                      disabled={isCreatingAdmin}
+                      className="w-full py-2.5 bg-orange-600 hover:bg-orange-700 active:scale-[0.99] text-white font-bold rounded-xl text-xs transition-all shadow-xs flex items-center justify-center space-x-2 cursor-pointer disabled:opacity-75"
                     >
-                      <UserPlus className="w-4 h-4" />
-                      <span>Créer l'administrateur</span>
+                      {isCreatingAdmin ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin text-white" />
+                          <span>Création en cours...</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4" />
+                          <span>Créer l'administrateur</span>
+                        </>
+                      )}
                     </button>
                   </div>
                 </form>
