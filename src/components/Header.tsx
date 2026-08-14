@@ -1,6 +1,7 @@
 import React from 'react';
 import { MortutoLogo } from './MortutoLogo';
 import {
+  Menu,
   Search,
   ShoppingBag,
   Heart,
@@ -8,8 +9,8 @@ import {
   ShieldCheck,
   Sparkles,
   SlidersHorizontal,
-  UserCheck,
-  Percent
+  Phone,
+  AlertTriangle
 } from 'lucide-react';
 import { AdminUser } from '../types';
 
@@ -25,6 +26,7 @@ interface HeaderProps {
   onOpenCart: () => void;
   onOpenOrders: () => void;
   onOpenAdminLogin: () => void;
+  onOpenMenu?: () => void;
   currentAdmin: AdminUser | null;
 }
 
@@ -40,6 +42,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenCart,
   onOpenOrders,
   onOpenAdminLogin,
+  onOpenMenu,
   currentAdmin
 }) => {
   return (
@@ -47,20 +50,34 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Top Banner Announcement */}
       <div className="bg-slate-900 text-slate-100 text-[11px] py-1.5 px-4 text-center font-medium tracking-wide flex items-center justify-center space-x-2">
         <Sparkles className="w-3.5 h-3.5 text-orange-400 shrink-0" />
-        <span>Boutique Officielle mortuto-shop • Livraison OFFERTE dès 50 000 FCFA • Retours faciles sous 30j</span>
+        <span>Boutique Officielle mortuto-shop • Dakar, Sénégal • 77 178 86 56 / 76 769 48 72</span>
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20 gap-4">
-          {/* Mortuto Brand Logo */}
-          <div
-            className="cursor-pointer group py-1"
-            onClick={() => {
-              onSelectCategory('Tous');
-              onSearchChange('');
-            }}
-          >
-            <MortutoLogo size="md" />
+        <div className="flex items-center justify-between h-20 gap-3 sm:gap-4">
+          {/* Left: Menu Hamburger & Logo */}
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            <button
+              id="header-menu-btn"
+              type="button"
+              onClick={onOpenMenu}
+              className="p-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-800 transition-colors flex items-center justify-center cursor-pointer group shadow-2xs"
+              title="Ouvrir le menu, catégories et contacts"
+              aria-label="Menu principal"
+            >
+              <Menu className="w-5 h-5 group-hover:scale-105 transition-transform" />
+            </button>
+
+            {/* Mortuto Brand Logo */}
+            <div
+              className="cursor-pointer group py-1"
+              onClick={() => {
+                onSelectCategory('Tous');
+                onSearchChange('');
+              }}
+            >
+              <MortutoLogo size="md" />
+            </div>
           </div>
 
           {/* Search Input Bar (Desktop) */}
@@ -79,13 +96,13 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-1.5 sm:space-x-3">
             {/* Espace Administrateur Button (Visible ONLY when an admin is actively authenticated) */}
             {currentAdmin && (
               <button
                 id="admin-space-btn"
                 onClick={onOpenAdminLogin}
-                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+                className="flex items-center space-x-1.5 px-3 py-2 rounded-xl text-xs font-bold transition-all border bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100 cursor-pointer"
                 title="Accéder au panneau d'administration"
               >
                 <ShieldCheck className="w-4 h-4 text-orange-600" />
@@ -94,7 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
             )}
 
             {/* Wishlist Indicator */}
-            <div className="relative flex items-center px-2 py-1 text-slate-600 text-xs font-semibold">
+            <div className="relative hidden xs:flex items-center px-2 py-1 text-slate-600 text-xs font-semibold">
               <Heart className={`w-5 h-5 ${wishlistCount > 0 ? 'text-rose-500 fill-rose-500' : 'text-slate-600'} mr-1`} />
               <span className="hidden sm:inline">Favoris</span>
               {wishlistCount > 0 && (
@@ -108,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="orders-drawer-button"
               onClick={onOpenOrders}
-              className="relative flex items-center space-x-1.5 px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors"
+              className="relative flex items-center space-x-1.5 px-2.5 sm:px-3 py-2 rounded-xl hover:bg-slate-100 text-slate-700 text-xs font-semibold transition-colors cursor-pointer"
             >
               <Package className="w-4 h-4 text-slate-600" />
               <span className="hidden sm:inline">Commandes</span>
@@ -123,12 +140,12 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="cart-drawer-button"
               onClick={onOpenCart}
-              className="relative flex items-center space-x-2 px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-full text-xs font-extrabold shadow-xs transition-all"
+              className="relative flex items-center space-x-1.5 sm:space-x-2 px-3.5 sm:px-4 py-2.5 bg-orange-600 hover:bg-orange-700 text-white rounded-full text-xs font-extrabold shadow-xs transition-all cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
               <span>Panier</span>
               {cartCount > 0 && (
-                <span className="ml-1 bg-white text-orange-700 px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs">
+                <span className="ml-0.5 bg-white text-orange-700 px-2 py-0.5 rounded-full text-[11px] font-black shadow-2xs">
                   {cartCount}
                 </span>
               )}
@@ -158,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               key={cat}
               onClick={() => onSelectCategory(cat)}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer ${
                 selectedCategory === cat
                   ? 'bg-slate-900 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200 hover:text-slate-900'

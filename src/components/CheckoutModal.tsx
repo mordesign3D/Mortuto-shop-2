@@ -22,6 +22,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
 
   const [checkoutForm, setCheckoutForm] = useState({
     fullName: 'Mame Niang',
+    phone: '77 178 86 56',
     email: 'mame.niang@gmail.com',
     address: '15 Avenue Principale',
     city: 'Dakar',
@@ -91,7 +92,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 text-left text-xs max-w-md mx-auto space-y-1 text-emerald-950">
               <p><span className="font-bold">N° de commande :</span> {completedOrder.id}</p>
               <p><span className="font-bold">Montant Total :</span> {formatCFA(completedOrder.totalAmount)}</p>
-              <p><span className="font-bold">WhatsApp Vendeur :</span> mortuto-shop Business</p>
+              <p><span className="font-bold">WhatsApp Vendeur :</span> mortuto-shop (77 178 86 56)</p>
             </div>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
@@ -120,9 +121,9 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             <div className="bg-emerald-50 border border-emerald-200 rounded-2xl p-3.5 flex items-start space-x-3 text-xs text-emerald-900">
               <MessageCircle className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
               <div>
-                <p className="font-bold">Directement vers votre WhatsApp Business !</p>
+                <p className="font-bold">Transmission directe sur WhatsApp (77 178 86 56) !</p>
                 <p className="text-[11px] text-emerald-700 mt-0.5">
-                  En validant votre commande, le contenu de votre panier et vos coordonnées seront automatiquement envoyés sur le compte WhatsApp officiel de <span className="font-bold">mortuto-shop</span>.
+                  En validant votre commande, le récapitulatif complet et vos coordonnées sont transmis en direct sur le compte WhatsApp vendeur officiel de <span className="font-bold">mortuto-shop (+221 77 178 86 56)</span>.
                 </p>
               </div>
             </div>
@@ -146,6 +147,18 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                 </div>
 
                 <div>
+                  <label className="text-[11px] font-semibold text-slate-700 block mb-1">Téléphone de contact</label>
+                  <input
+                    type="tel"
+                    required
+                    value={checkoutForm.phone}
+                    onChange={(e) => setCheckoutForm({ ...checkoutForm, phone: e.target.value })}
+                    placeholder="Ex: 77 178 86 56"
+                    className="w-full px-3 py-2 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-orange-500 font-semibold"
+                  />
+                </div>
+
+                <div className="sm:col-span-2">
                   <label className="text-[11px] font-semibold text-slate-700 block mb-1">E-mail</label>
                   <input
                     type="email"
@@ -216,12 +229,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               {isSubmitting ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin text-white" />
-                  <span>Préparation et ouverture de WhatsApp Business...</span>
+                  <span>Envoi vers WhatsApp 77 178 86 56...</span>
                 </>
               ) : (
                 <>
-                  <MessageCircle className="w-4 h-4" />
-                  <span>Envoyer la commande sur WhatsApp Business ({formatCFA(total)})</span>
+                  <MessageCircle className="w-4 h-4 fill-white" />
+                  <span>Envoyer la commande au 77 178 86 56 ({formatCFA(total)})</span>
                 </>
               )}
             </button>

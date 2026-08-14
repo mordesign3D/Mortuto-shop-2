@@ -34,6 +34,7 @@ export interface Order {
   status: 'En préparation' | 'Expédié' | 'Livré';
   shippingAddress: {
     fullName: string;
+    phone?: string;
     email: string;
     address: string;
     city: string;

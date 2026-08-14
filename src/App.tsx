@@ -7,10 +7,11 @@ import { ProductModal } from './components/ProductModal';
 import { CartDrawer } from './components/CartDrawer';
 import { CheckoutModal } from './components/CheckoutModal';
 import { OrdersModal } from './components/OrdersModal';
+import { MenuDrawer } from './components/MenuDrawer';
 import { AdminPortal } from './components/AdminPortal';
 import { MortutoLogo } from './components/MortutoLogo';
-import { Sparkles, Award, Truck, Shield, RotateCcw, Tag, MessageCircle, Lock } from 'lucide-react';
-import { WHATSAPP_BUSINESS_URL } from './utils/whatsapp';
+import { Sparkles, Award, Truck, Shield, RotateCcw, Tag, MessageCircle, Lock, Phone, Mail, AlertTriangle } from 'lucide-react';
+import { WHATSAPP_BUSINESS_URL, openWhatsAppReportIssue } from './utils/whatsapp';
 import { getAppRoute, navigateTo, AppRoute } from './utils/navigation';
 
 export default function App() {
@@ -73,6 +74,7 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isOrdersOpen, setIsOrdersOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Sync to localStorage
   useEffect(() => {
@@ -232,6 +234,7 @@ export default function App() {
         onOpenCart={() => setIsCartOpen(true)}
         onOpenOrders={() => setIsOrdersOpen(true)}
         onOpenAdminLogin={() => navigateTo('admin')}
+        onOpenMenu={() => setIsMenuOpen(true)}
         currentAdmin={currentAdmin}
       />
 
@@ -323,7 +326,7 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-slate-200 mt-12 py-8 px-4 sm:px-6 lg:px-8">
+      <footer className="bg-white border-t border-slate-200 mt-12 py-10 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center sm:text-left">
           <div className="flex items-center space-x-3 justify-center sm:justify-start">
             <Shield className="w-8 h-8 text-orange-600 shrink-0" />
@@ -350,7 +353,40 @@ export default function App() {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
+        {/* Contacts Banner in Footer */}
+        <div className="max-w-7xl mx-auto mt-8 pt-6 border-t border-slate-100 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <MessageCircle className="w-4 h-4" />
+            </div>
+            <div className="text-left">
+              <div className="text-[10px] text-slate-400 font-bold uppercase">WhatsApp Principal</div>
+              <a href="tel:+221771788656" className="text-xs font-bold text-slate-900 hover:text-emerald-600">77 178 86 56</a>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-orange-100 text-orange-700 flex items-center justify-center shrink-0">
+              <Phone className="w-4 h-4" />
+            </div>
+            <div className="text-left">
+              <div className="text-[10px] text-slate-400 font-bold uppercase">Ligne Téléphonique</div>
+              <a href="tel:+221767694872" className="text-xs font-bold text-slate-900 hover:text-orange-600">76 769 48 72</a>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3 p-3 bg-slate-50 rounded-2xl border border-slate-100">
+            <div className="w-9 h-9 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center shrink-0">
+              <Mail className="w-4 h-4" />
+            </div>
+            <div className="text-left min-w-0">
+              <div className="text-[10px] text-slate-400 font-bold uppercase">E-mail de Contact</div>
+              <a href="mailto:Nianguemame@gmail.com" className="text-xs font-bold text-slate-900 hover:text-blue-600 truncate block">Nianguemame@gmail.com</a>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto mt-6 pt-6 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-4">
           <MortutoLogo size="sm" />
           <div className="flex items-center space-x-4">
             <p className="text-[11px] text-slate-400">
@@ -370,6 +406,21 @@ export default function App() {
       </footer>
 
       {/* Modals & Drawers */}
+      <MenuDrawer
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        categories={categoriesList}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        wishlistCount={wishlist.length}
+        ordersCount={orders.length}
+        cartCount={cartTotalCount}
+        onOpenCart={() => setIsCartOpen(true)}
+        onOpenOrders={() => setIsOrdersOpen(true)}
+        onOpenAdminLogin={() => navigateTo('admin')}
+        currentAdmin={currentAdmin}
+      />
+
       <ProductModal
         product={selectedProduct}
         onClose={() => setSelectedProduct(null)}

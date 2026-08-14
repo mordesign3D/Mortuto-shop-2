@@ -1,14 +1,17 @@
 import { Order, CartItem } from '../types';
 import { formatCFA } from './formatters';
 
-export const WHATSAPP_BUSINESS_URL = "https://wa.me/message/QJ4AAYTVECKYG1";
+// Numéro WhatsApp direct du propriétaire de la boutique mortuto-shop (Sénégal +221 77 178 86 56)
+export const WHATSAPP_PHONE_NUMBER = "221771788656";
+export const WHATSAPP_DISPLAY_NUMBER = "77 178 86 56 (+221)";
+export const WHATSAPP_BUSINESS_URL = `https://wa.me/${WHATSAPP_PHONE_NUMBER}`;
 
 export function buildWhatsAppOrderMessage(order: Order): string {
   const itemsText = order.items
     .map(
       (item) =>
         `• ${item.quantity}x *${item.product.name}*` +
-        (item.selectedSize ? ` [Taille: ${item.selectedSize}]` : '') +
+        (item.selectedSize ? ` [Option/Taille: ${item.selectedSize}]` : '') +
         (item.selectedColor ? ` [Couleur: ${item.selectedColor}]` : '') +
         ` → ${formatCFA(item.product.price * item.quantity)}`
     )
@@ -16,7 +19,7 @@ export function buildWhatsAppOrderMessage(order: Order): string {
 
   const addr = order.shippingAddress;
   const addressText = addr
-    ? `\n👤 *Client:* ${addr.fullName}\n📧 *E-mail:* ${addr.email}\n📍 *Adresse:* ${addr.address}, ${addr.postalCode} ${addr.city}`
+    ? `\n👤 *Client:* ${addr.fullName}\n📞 *Téléphone:* ${addr.phone || 'Non renseigné'}\n📧 *E-mail:* ${addr.email}\n📍 *Adresse de livraison:* ${addr.address}, ${addr.postalCode} ${addr.city}`
     : '';
 
   const message =
@@ -25,12 +28,12 @@ export function buildWhatsAppOrderMessage(order: Order): string {
 🆔 *N° Commande:* ${order.id}
 📅 *Date:* ${order.date}${addressText}
 
-📦 *ARTICLES:*
+📦 *DÉTAIL DES ARTICLES :*
 ${itemsText}
 
-💰 *TOTAL:* *${formatCFA(order.totalAmount)}*
+💰 *MONTANT TOTAL :* *${formatCFA(order.totalAmount)}*
 ----------------------------------
-Bonjour mortuto-shop ! Je viens d'effectuer cette commande et je souhaite la valider avec vous sur WhatsApp.`;
+Bonjour mortuto-shop ! Je viens de finaliser cette commande sur votre boutique et je vous l'envoie directement sur votre compte WhatsApp 771788656 pour validation et livraison.`;
 
   return message;
 }
@@ -40,33 +43,43 @@ export function buildWhatsAppCartMessage(cartItems: CartItem[], totalAmount: num
     .map(
       (item) =>
         `• ${item.quantity}x *${item.product.name}*` +
-        (item.selectedSize ? ` [Taille: ${item.selectedSize}]` : '') +
+        (item.selectedSize ? ` [Option/Taille: ${item.selectedSize}]` : '') +
         (item.selectedColor ? ` [Couleur: ${item.selectedColor}]` : '') +
         ` → ${formatCFA(item.product.price * item.quantity)}`
     )
     .join('\n');
 
   const message =
-`🛒 *MON PANIER MORTUTO-SHOP*
+`🛒 *COMMANDE DIRECTE DU PANIER - MORTUTO-SHOP*
 ----------------------------------
-📦 *ARTICLES:*
+📦 *ARTICLES SÉLECTIONNÉS :*
 ${itemsText}
 
-💰 *ESTIMATION TOTAL:* *${formatCFA(totalAmount)}*
+💰 *TOTAL DU PANIER :* *${formatCFA(totalAmount)}*
 ----------------------------------
-Bonjour mortuto-shop ! Je souhaite commander ces articles présents dans mon panier.`;
+Bonjour mortuto-shop ! Je souhaite commander directement ces articles de mon panier vers votre compte WhatsApp (771788656). Merci de me donner les détails pour la livraison.`;
 
   return message;
 }
 
 export function openWhatsAppOrder(order: Order) {
   const text = buildWhatsAppOrderMessage(order);
-  const url = `${WHATSAPP_BUSINESS_URL}?text=${encodeURIComponent(text)}`;
+  const url = `https://wa.me/${WHATSAPP_PHONE_NUMBER}?text=${encodeURIComponent(text)}`;
   window.open(url, '_blank');
 }
 
 export function openWhatsAppCart(cartItems: CartItem[], totalAmount: number) {
   const text = buildWhatsAppCartMessage(cartItems, totalAmount);
-  const url = `${WHATSAPP_BUSINESS_URL}?text=${encodeURIComponent(text)}`;
+  const url = `https://wa.me/${WHATSAPP_PHONE_NUMBER}?text=${encodeURIComponent(text)}`;
   window.open(url, '_blank');
 }
+
+export function openWhatsAppReportIssue() {
+  const text = `⚠️ *SIGNALEMENT DE PROBLÈME - MORTUTO-SHOP*
+----------------------------------
+Bonjour mortuto-shop ! Je rencontre un problème / j'ai une question concernant le site ou une commande. 
+Détails : `;
+  const url = `https://wa.me/${WHATSAPP_PHONE_NUMBER}?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+}
+

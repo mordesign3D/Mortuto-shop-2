@@ -156,20 +156,20 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({
                 id="checkout-proceed-btn"
                 type="button"
                 onClick={onProceedToCheckout}
-                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-colors cursor-pointer"
+                className="w-full py-3 px-4 bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] text-white font-bold rounded-2xl text-xs flex items-center justify-center space-x-2 shadow-md transition-all cursor-pointer"
               >
-                <MessageCircle className="w-4 h-4" />
-                <span>Commander via WhatsApp Business</span>
+                <MessageCircle className="w-4 h-4 fill-white" />
+                <span>Envoyer la commande au 771788656</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
               <button
                 type="button"
                 onClick={() => openWhatsAppCart(cartItems, cartTotal)}
-                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition-colors border border-slate-200 cursor-pointer"
+                className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-[0.99] text-slate-800 font-bold rounded-xl text-xs flex items-center justify-center space-x-2 transition-all border border-slate-200 cursor-pointer"
               >
                 <MessageCircle className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Envoyer le panier brut sur WhatsApp</span>
+                <span>Validation Express WhatsApp (77 178 86 56)</span>
               </button>
             </div>
           </div>
